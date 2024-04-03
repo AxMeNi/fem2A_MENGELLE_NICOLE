@@ -51,9 +51,29 @@ namespace FEM2A {
             return true;
         }
         
-        bool test_quadrature() 
+        bool test_quadrature(int order, bool border = false) 
         {
-        	std::cout << "Coucou \n";
+        	Quadrature quad;
+        	quad = quad.get_quadrature(order, border); // Je crée une quadrature
+        	std::cout << "Valeur de la somme des poids : ";
+        	double sum_w = 0;
+        	for (int i = 0; i < quad.nb_points(); i++) { // Les i sont les index des points quad.point(i).x et quad.point(i).y sont les coordonnées du point i
+        		sum_w += quad.weight(i); // Je somme les poids de la quadrature
+        	}
+        	std::cout << sum_w;
+        	if (sum_w == 0.5) { //Si la somme vaut 0.5 ça fonctionne
+        		return true;
+        	}	
+        	return false;
+        }
+        
+        bool test_ElementMapping() {
+        	Mesh mesh;
+        	mesh.load("data/square.mesh");
+        	el = ElementMapping( mesh, false, 4 );
+        	for (int i = 0; i < 3 ;++i) {
+        		std::cout << el.vertices_[i].x ;
+        	}
         	return true;
         }
 

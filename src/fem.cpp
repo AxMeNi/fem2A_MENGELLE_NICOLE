@@ -135,13 +135,27 @@ namespace FEM2A {
         std::cout << "[ElementMapping] constructor for element " << i << " ";
         if ( border ) std::cout << "(border)";
         std::cout << '\n';
-        // TODO
+        std::vector< vertex > vertices ;
+        //Objectif : récupérer les vertices de l'élément de mapping  et les stocker dans l'attribut vertex
+        if ( border ) { // Si l'élément est un edge
+        	for (int index_local_vertex = 0; index_local_vertex < 2 ; index_local_vertex++) {
+        	vertices.push_back(M.get_edge_vertex(i, index_local_vertex));
+        	}
+        }
+        else { //Si l'élément est un triangle
+        	for (int index_local_vertex = 0; index_local_vertex < 3 ; index_local_vertex++) {
+        	vertices.push_back(M.get_triangle_vertex(i, index_local_vertex));
+        	}
+        }
+        
+        vertices_ = vertices;
     }
 
     vertex ElementMapping::transform( vertex x_r ) const
     {
         std::cout << "[ElementMapping] transform reference to world space" << '\n';
         // TODO
+        
         vertex r ;
         return r ;
     }
