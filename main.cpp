@@ -31,10 +31,12 @@ void run_tests()
     const bool t_opennl = true;
     const bool t_lmesh = true;
     const bool t_io = true;
+    const bool t_quad = true;
 
     if( t_opennl ) test_opennl();
     if( t_lmesh ) Tests::test_load_mesh();
     if( t_io ) Tests::test_load_save_mesh();
+    if( t_quad ) Tests::test_quadrature();
 }
 
 void run_simu()
@@ -68,6 +70,9 @@ int main( int argc, const char * argv[] )
         std::cout << " -v, --verbose:     print lots of details" << std::endl;
         return 0;
     }
+    
+    /// C'EST ICI QUE LES COMMANDES SONT EXECUTEES
+    
 
     /* Run the tests if asked */
     if( flag_is_used("-t", arguments)
@@ -80,6 +85,5 @@ int main( int argc, const char * argv[] )
         || flag_is_used("--run-simu", arguments) ) {
         run_simu();
     }
-
     return 0;
 }
