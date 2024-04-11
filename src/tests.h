@@ -70,9 +70,21 @@ namespace FEM2A {
         bool test_ElementMapping() {
         	Mesh mesh;
         	mesh.load("data/square.mesh");
-        	el = ElementMapping( mesh, false, 4 );
+        	ElementMapping el_triangle( mesh, false, 4 );
+        	ElementMapping el_border( mesh, true, 4 );
         	for (int i = 0; i < 3 ;++i) {
-        		std::cout << el.vertices_[i].x ;
+        		std::cout << "v" << i << " : ";
+        		std::cout << el_triangle.get_vertices()[i].x ;
+        		std::cout << ", ";
+        		std::cout << el_triangle.get_vertices()[i].y ;
+        		std::cout << "\n";
+        	}
+        	for (int i = 0; i < 2 ;++i) {
+        		std::cout << "v" << i << " : ";
+        		std::cout << el_border.get_vertices()[i].x ;
+        		std::cout << ", ";
+        		std::cout << el_border.get_vertices()[i].y ;
+        		std::cout << "\n";
         	}
         	return true;
         }
