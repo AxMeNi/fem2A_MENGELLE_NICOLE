@@ -32,13 +32,15 @@ void run_tests()
     const bool t_lmesh = false;
     const bool t_io = false;
     const bool t_quad = false;
-    const bool t_elmap = true;
+    const bool t_elmap = false;
+    const bool t_shpf = true;
 
     if( t_opennl ) test_opennl();
     if( t_lmesh ) Tests::test_load_mesh();
     if( t_io ) Tests::test_load_save_mesh();
     if( t_quad ) Tests::test_quadrature(2, false);
     if( t_elmap) Tests::test_ElementMapping();
+    if( t_shpf) Tests::test_ShapeFunctions();
 }
 
 void run_simu()

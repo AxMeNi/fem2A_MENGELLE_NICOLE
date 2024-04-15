@@ -154,9 +154,16 @@ namespace FEM2A {
     vertex ElementMapping::transform( vertex x_r ) const
     {
         std::cout << "[ElementMapping] transform reference to world space" << '\n';
-        // TODO
-        
+        //TODO
         vertex r ;
+        if (border_) {
+        	r.x = vertices_[0].x * (1 - x_r.x) + vertices_[1].x * x_r.x;
+        	r.y = vertices_[0].y * (1 - x_r.x) + vertices_[1].y * x_r.x;
+        }
+        else {
+        	r.x = (1 - x_r.x - x_r.y) * vertices_[0].x + vertices_[1].x * x_r.x + vertices_[2].x * x_r.y;
+        	r.y = (1 - x_r.x - x_r.y) * vertices_[0].y + vertices_[1].y * x_r.x + vertices_[2].y * x_r.y;
+        }
         return r ;
     }
 
@@ -165,6 +172,18 @@ namespace FEM2A {
         std::cout << "[ElementMapping] compute jacobian matrix" << '\n';
         // TODO
         DenseMatrix J ;
+        if (border_) {
+        	J.set_size(2, 1) ;
+        	J.set(0, 0, -1 * vertices_[0].x + 1 * vertices_[1].x);
+        	J.set(1, 0, -1 * vertices_[0].y + 1 * vertices_[1].y);
+        }
+        else {
+        	J.set_size(2, 2) ;
+        	J.set(0, 0, -1 * vertices_[0].x + 1 * vertices_[1].x);
+        	J.set(0, 1, -1 * vertices_[0].x + 1 * vertices_[2].x);
+        	J.set(1, 0, -1 * vertices_[0].y + 1 * vertices_[1].y);
+        	J.set(1, 1, -1 * vertices_[0].y + 1 * vertices_[2].y);
+         }
         return J ;
     }
 
@@ -172,7 +191,11 @@ namespace FEM2A {
     {
         std::cout << "[ElementMapping] compute jacobian determinant" << '\n';
         // TODO
-        return 0. ;
+        double det;
+        DenseMatrix jacob_matrix = jacobian_matrix( x_r );
+        det = jacob_matrix.det_2x2();
+        
+        return det ;
     }
 
     /****************************************************************/
@@ -188,14 +211,19 @@ namespace FEM2A {
     int ShapeFunctions::nb_functions() const
     {
         std::cout << "[ShapeFunctions] number of functions" << '\n';
-        // TODO
+        if ( dim_ == 1 ) {
+        	return 2;
+        }
+        else {
+        	return 3;        
+        }
         return 0 ;
     }
 
     double ShapeFunctions::evaluate( int i, vertex x_r ) const
     {
         std::cout << "[ShapeFunctions] evaluate shape function " << i << '\n';
-        // TODO
+       	if 
         return 0. ; // should not be reached
     }
 

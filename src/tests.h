@@ -70,6 +70,7 @@ namespace FEM2A {
         bool test_ElementMapping() {
         	Mesh mesh;
         	mesh.load("data/square.mesh");
+        	// Test constructeur
         	ElementMapping el_triangle( mesh, false, 4 );
         	ElementMapping el_border( mesh, true, 4 );
         	for (int i = 0; i < 3 ;++i) {
@@ -86,8 +87,33 @@ namespace FEM2A {
         		std::cout << el_border.get_vertices()[i].y ;
         		std::cout << "\n";
         	}
+        	
+        	// Test transform
+        	vertex vert1;
+        	vert1.x = 0.2;
+        	vert1.y = 0.4;
+        	vertex out = el_triangle.transform(vert1);
+        	std::cout << "Dans l'espace global >> ";
+        	std::cout << "x : " << out.x << " y :" << out.y ;
+        	std::cout << "\n";
+        	
+        	// Test jacobian matrix
+        	DenseMatrix jacob_matrix = el_triangle.jacobian_matrix(vert1);
+        	jacob_matrix.print();
+        	
+        	// Test det of jacobian matrix
+        	double det = el_triangle.jacobian(vert1);
+        	std::cout << det << "\n";
+        	
         	return true;
         }
-
+        
+        bool test_ShapeFunctions() {
+        	ShapeFunctions shpf_ref_tri (2, 1);
+        	int nb_functions_test =  shpf_ref_tri.nb_functions();
+        	std::cout << "nb_functions = " << nb_functions_test << "\n";
+        	return true;
+        }
+        
     }
 }
