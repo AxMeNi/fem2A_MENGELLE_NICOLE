@@ -193,8 +193,12 @@ namespace FEM2A {
         // TODO
         double det;
         DenseMatrix jacob_matrix = jacobian_matrix( x_r );
-        det = jacob_matrix.det_2x2();
-        
+        if (border_) {
+        	det = pow( (pow( jacob_matrix.get(0,0), 2.) + pow (jacob_matrix.get(1,0), 2.)),0.5);
+        }
+        else {
+        	det = jacob_matrix.det_2x2();
+        }
         return det ;
     }
 
@@ -206,6 +210,8 @@ namespace FEM2A {
     {
         std::cout << "[ShapeFunctions] constructor in dimension " << dim << '\n';
         // TODO
+        assert ((dim_ == 1) || (dim == 2));
+        assert (order == 1);
     }
 
     int ShapeFunctions::nb_functions() const
@@ -223,7 +229,27 @@ namespace FEM2A {
     double ShapeFunctions::evaluate( int i, vertex x_r ) const
     {
         std::cout << "[ShapeFunctions] evaluate shape function " << i << '\n';
-       	if 
+       	if (dim_ == 1) {
+       		if (i == 0) {
+       			double value = 1 - x_r.x;
+       			return value;
+       		}
+       		else if (i == 1) {
+       			return x_r.x;
+       		}
+       	}
+       	else if (dim_ == 2) {
+       		if (i == 0) {
+       			double value = 1 - x_r.x - x_r.y;
+       			return value;
+       		}
+       		else if (i == 1) {
+       			return x_r.x;
+       		}
+       		else if (i == 2) {
+       			return x_r.y;
+       		}
+       	}
         return 0. ; // should not be reached
     }
 
@@ -232,6 +258,30 @@ namespace FEM2A {
         std::cout << "[ShapeFunctions] evaluate gradient shape function " << i << '\n';
         // TODO
         vec2 g ;
+        if (dim_ == 1) {
+       		if (i == 0) {
+       			g.x = -1;
+       			g.y = 0;
+       		}
+       		else if (i == 1) {
+       			g.x = 1;
+       			g.y = 0;
+       		}
+       	}
+       	else if (dim_ == 2) {
+       		if (i == 0) {
+       			g.x = -1;
+       			g.y = -1;
+       		}
+       		else if (i == 1) {
+       			g.x = 1;
+       			g.y = 0;
+       		}
+       		else if (i == 2) {
+       			g.x = 0;
+       			g.y = 1;
+       		}
+       	}
         return g ;
     }
 
@@ -245,8 +295,54 @@ namespace FEM2A {
         double (*coefficient)(vertex),
         DenseMatrix& Ke )
     {
-        std::cout << "compute elementary matrix" << '\n';
-        // TODO
+    	double wq;
+    	vertex Me;
+    	double coeff;
+    	DenseMatrix Je;
+    	double absJac;
+    	vec2 grad_phi_i;
+    	vec2 grad_phi_j;
+    	double Ke_ij = 0;
+    	DenseMatrix trans_inv_Je;
+    	trans_inv_Je.set_size(2,2);
+    	int max_i = reference_functions.nb_functions();
+    	int max_j = reference_functions.nb_functions();
+    	vec2 matricegauche;
+    	vec2 matricedroite;
+    	Ke.set_size(max_i, max_j);
+    	
+     	std::cout << "compute elementary matrix" << '\n';
+     	for (int i = 0; i < max_i; i++) {
+     	
+     		for (int j = 0; j < max_j; j++) {
+     			
+			for (int q = 0; q < quadrature.nb_points(); q++) {
+				
+				wq = quadrature.weight(q);
+				Me = elt_mapping.transform(quadrature.point(q));
+				coeff = coefficient(Me);
+				Je = elt_mapping.jacobian_matrix(quadrature.point(q));
+				trans_inv_Je = Je.transpose().invert_2x2();
+				absJac = abs(elt_mapping.jacobian(quadrature.point(q)));
+				grad_phi_i = reference_functions.evaluate_grad(i, quadrature.point(q));
+				grad_phi_j = reference_functions.evaluate_grad(j, quadrature.point(q));
+				//On multiplie les membre de droite et de gauche par les coefficients
+				grad_phi_i.x *= wq * coeff;
+				grad_phi_i.y *= wq * coeff;
+				grad_phi_j.x *= absJac;
+				grad_phi_j.y *= absJac;
+				// Traitement de la matrice de gauche
+				matricegauche = trans_inv_Je.mult_2x2_2(grad_phi_i);
+				// Traitement de la matrice de droite
+				matricedroite = trans_inv_Je.mult_2x2_2(grad_phi_j);
+				Ke_ij += dot(matricegauche, matricedroite);
+			}
+			Ke.set(i, j, Ke_ij);
+			Ke_ij = 0;
+		}
+	
+        } 
+    	Ke.print();     
     }
 
     void local_to_global_matrix(
@@ -257,6 +353,7 @@ namespace FEM2A {
     {
         std::cout << "Ke -> K" << '\n';
         // TODO
+        
     }
 
     void assemble_elementary_vector(

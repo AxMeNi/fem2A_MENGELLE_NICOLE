@@ -43,6 +43,7 @@ namespace FEM2A {
             return true;
         }
 
+
         bool test_load_save_mesh()
         {
             Mesh mesh;
@@ -50,6 +51,7 @@ namespace FEM2A {
             mesh.save("data/geothermie_4.mesh");
             return true;
         }
+        
         
         bool test_quadrature(int order, bool border = false) 
         {
@@ -66,6 +68,7 @@ namespace FEM2A {
         	}	
         	return false;
         }
+        
         
         bool test_ElementMapping() {
         	Mesh mesh;
@@ -87,7 +90,7 @@ namespace FEM2A {
         		std::cout << el_border.get_vertices()[i].y ;
         		std::cout << "\n";
         	}
-        	
+ 
         	// Test transform
         	vertex vert1;
         	vert1.x = 0.2;
@@ -102,17 +105,61 @@ namespace FEM2A {
         	jacob_matrix.print();
         	
         	// Test det of jacobian matrix
-        	double det = el_triangle.jacobian(vert1);
-        	std::cout << det << "\n";
-        	
+        	double det1 = el_triangle.jacobian(vert1);
+        	std::cout << "determinant with the triangle :" << det1 << "\n";
+        	double det2 = el_border.jacobian(vert1);
+        	std::cout << "determinant with the border :" << det2 << "\n";
         	return true;
         }
         
+        
         bool test_ShapeFunctions() {
-        	ShapeFunctions shpf_ref_tri (2, 1);
+        	vertex vert1;
+        	vert1.x = 0.2;
+        	vert1.y = 0.4;
+        	ShapeFunctions shpf_ref_tri (2, 1); // dim, 
+        	ShapeFunctions shpf_ref_seg (1, 1); // dim
+        	
         	int nb_functions_test =  shpf_ref_tri.nb_functions();
+        	int nb_functions_test2 =  shpf_ref_seg.nb_functions();
         	std::cout << "nb_functions = " << nb_functions_test << "\n";
+        	std::cout << "nb_functions = " << nb_functions_test2 << "\n";
+        	
+        	double evaluation_tri = shpf_ref_tri.evaluate(0, vert1);
+        	double evaluation_seg = shpf_ref_seg.evaluate(0, vert1);
+        	std::cout << "evaluation_tri = " << evaluation_tri << "\n";
+        	std::cout << "evaluation_seg = " << evaluation_seg << "\n";
+        	
+        	vec2 evaluation_grad_tri = shpf_ref_tri.evaluate_grad(0, vert1);
+        	vec2 evaluation_grad_seg = shpf_ref_seg.evaluate_grad(1, vert1);
+        	std::cout << "evaluation_grad_tri = " << evaluation_grad_tri.x << "," << evaluation_grad_tri.y << "\n";
+        	std::cout << "evaluation_grad_seg = " << evaluation_grad_seg.x << "," << evaluation_grad_tri.y << "\n";
         	return true;
+        }
+        
+        
+        // Définition de la fonction de pointeur renvoyant toujours 1
+	double constant_coefficient(FEM2A::vertex vertex) {
+    		return 1.0; // Toujours renvoyer 1 pour n'importe quelle valeur de vertex
+	}
+	
+        bool test_assemble_elementary_matrix() {
+	    Mesh mesh;
+	    mesh.load("data/square.mesh");
+	    ElementMapping elt_mapping(mesh, false, 4);
+	    
+	    ShapeFunctions reference_functions(2, 1);
+	    
+	    Quadrature quad;
+	    Quadrature quadrature = quad.get_quadrature(2, false);
+	    
+	    DenseMatrix Ke_in;
+	    
+	    // Assemblage de la matrice élémentaire en utilisant la fonction de pointeur constant_coefficient
+	    assemble_elementary_matrix(elt_mapping, reference_functions, quadrature, constant_coefficient, Ke_in);
+	    
+	    return true;
+	
         }
         
     }
