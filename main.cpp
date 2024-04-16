@@ -34,7 +34,9 @@ void run_tests()
     const bool t_quad = false;
     const bool t_elmap = false;
     const bool t_shpf = false;
-    const bool t_asmblmat = true;
+    const bool t_asmblmat = false;
+    const bool t_lcltgbl = false;
+    const bool t_cdtdirich = true;
 
     if( t_opennl ) test_opennl();
     if( t_lmesh ) Tests::test_load_mesh();
@@ -43,6 +45,8 @@ void run_tests()
     if( t_elmap) Tests::test_ElementMapping();
     if( t_shpf) Tests::test_ShapeFunctions();
     if( t_asmblmat) Tests::test_assemble_elementary_matrix();
+    if( t_lcltgbl) Tests::test_local_to_global_matrix() ;
+    if( t_cdtdirich) Tests::test_apply_dirichlet_boundary_conditions();
 }
 
 void run_simu()

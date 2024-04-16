@@ -162,5 +162,48 @@ namespace FEM2A {
 	
         }
         
+        
+        bool test_local_to_global_matrix() {
+		Mesh mesh;
+		mesh.load("data/square.mesh");
+		ElementMapping elt_mapping(mesh, false, 4);
+		    
+		ShapeFunctions reference_functions(2, 1);
+		    
+		Quadrature quad;
+		Quadrature quadrature = quad.get_quadrature(2, false);
+		    
+		DenseMatrix Ke_in;
+		    
+	   	assemble_elementary_matrix(elt_mapping, reference_functions, quadrature, constant_coefficient, Ke_in);
+	   	
+	   	SparseMatrix K (mesh.nb_vertices());
+        	local_to_global_matrix(mesh, 4, Ke_in, K);
+        	
+        	return true;
+        }
+        
+        
+        bool test_apply_dirichlet_boundary_conditions() {
+        	
+        	
+        	return true;
+        }
+        
+        
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+

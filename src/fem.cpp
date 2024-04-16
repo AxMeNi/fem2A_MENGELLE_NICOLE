@@ -132,8 +132,8 @@ namespace FEM2A {
     ElementMapping::ElementMapping( const Mesh& M, bool border, int i )
         : border_( border )
     {
-        std::cout << "[ElementMapping] constructor for element " << i << " ";
-        if ( border ) std::cout << "(border)";
+        //std::cout << "[ElementMapping] constructor for element " << i << " ";
+        //if ( border ) std::cout << "(border)";
         std::cout << '\n';
         std::vector< vertex > vertices ;
         //Objectif : récupérer les vertices de l'élément de mapping  et les stocker dans l'attribut vertex
@@ -153,7 +153,7 @@ namespace FEM2A {
 
     vertex ElementMapping::transform( vertex x_r ) const
     {
-        std::cout << "[ElementMapping] transform reference to world space" << '\n';
+        //std::cout << "[ElementMapping] transform reference to world space" << '\n';
         //TODO
         vertex r ;
         if (border_) {
@@ -169,7 +169,7 @@ namespace FEM2A {
 
     DenseMatrix ElementMapping::jacobian_matrix( vertex x_r ) const
     {
-        std::cout << "[ElementMapping] compute jacobian matrix" << '\n';
+        //std::cout << "[ElementMapping] compute jacobian matrix" << '\n';
         // TODO
         DenseMatrix J ;
         if (border_) {
@@ -189,7 +189,7 @@ namespace FEM2A {
 
     double ElementMapping::jacobian( vertex x_r ) const
     {
-        std::cout << "[ElementMapping] compute jacobian determinant" << '\n';
+        //std::cout << "[ElementMapping] compute jacobian determinant" << '\n';
         // TODO
         double det;
         DenseMatrix jacob_matrix = jacobian_matrix( x_r );
@@ -208,7 +208,7 @@ namespace FEM2A {
     ShapeFunctions::ShapeFunctions( int dim, int order )
         : dim_( dim ), order_( order )
     {
-        std::cout << "[ShapeFunctions] constructor in dimension " << dim << '\n';
+        //std::cout << "[ShapeFunctions] constructor in dimension " << dim << '\n';
         // TODO
         assert ((dim_ == 1) || (dim == 2));
         assert (order == 1);
@@ -216,7 +216,7 @@ namespace FEM2A {
 
     int ShapeFunctions::nb_functions() const
     {
-        std::cout << "[ShapeFunctions] number of functions" << '\n';
+        //std::cout << "[ShapeFunctions] number of functions" << '\n';
         if ( dim_ == 1 ) {
         	return 2;
         }
@@ -228,7 +228,7 @@ namespace FEM2A {
 
     double ShapeFunctions::evaluate( int i, vertex x_r ) const
     {
-        std::cout << "[ShapeFunctions] evaluate shape function " << i << '\n';
+        //std::cout << "[ShapeFunctions] evaluate shape function " << i << '\n';
        	if (dim_ == 1) {
        		if (i == 0) {
        			double value = 1 - x_r.x;
@@ -255,7 +255,7 @@ namespace FEM2A {
 
     vec2 ShapeFunctions::evaluate_grad( int i, vertex x_r ) const
     {
-        std::cout << "[ShapeFunctions] evaluate gradient shape function " << i << '\n';
+        //std::cout << "[ShapeFunctions] evaluate gradient shape function " << i << '\n';
         // TODO
         vec2 g ;
         if (dim_ == 1) {
@@ -311,7 +311,7 @@ namespace FEM2A {
     	vec2 matricedroite;
     	Ke.set_size(max_i, max_j);
     	
-     	std::cout << "compute elementary matrix" << '\n';
+     	//std::cout << "compute elementary matrix" << '\n';
      	for (int i = 0; i < max_i; i++) {
      	
      		for (int j = 0; j < max_j; j++) {
@@ -342,7 +342,7 @@ namespace FEM2A {
 		}
 	
         } 
-    	Ke.print();     
+    	// Ke.print();     
     }
 
     void local_to_global_matrix(
@@ -351,9 +351,17 @@ namespace FEM2A {
         const DenseMatrix& Ke,
         SparseMatrix& K )
     {
-        std::cout << "Ke -> K" << '\n';
-        // TODO
-        
+        //std::cout << "Ke -> K" << '\n';
+        //TODO
+        // Ke et K sont symétriques
+	for (int i = 0; i < 3; i++) {
+		for (int j = 0; j < 3; j++) {
+			int glob_id1 = M.get_triangle_vertex_index(t, i);
+			int glob_id2 = M.get_triangle_vertex_index(t, j);
+			K.add(glob_id1, glob_id2, Ke.get(i,j));
+		}
+	}
+	// K.print();
     }
 
     void assemble_elementary_vector(
@@ -392,12 +400,28 @@ namespace FEM2A {
     void apply_dirichlet_boundary_conditions(
         const Mesh& M,
         const std::vector< bool >& attribute_is_dirichlet, /* size: nb of attributes */
-        const std::vector< double >& values, /* size: nb of DOFs */
+        const std::vector< double >& values, /* size: must be M.nb_vertices() */
         SparseMatrix& K,
         std::vector< double >& F )
     {
         std::cout << "apply dirichlet boundary conditions" << '\n';
-        // TODO
+        // TODO prendre p =10 000
+        std::vector< bool > processed_vertices(values.size(), false);
+        double penalty_coefficient = 10000.;
+        for ( int edge = 0; edge < M.nb_edges(); edge++ ) {
+        	int edge_attribute = M.get_edge_attribute(edge);
+        	if ( attribute_is_dirichlet[edge_attribute] ) {
+        		for (int v = 0; v < 2; v++) {
+        			int vertex_index = M.get_edge_vertex_index(edge, v);
+        			if ( !processed_vertices[vertex_index] ) {
+        				processed_vertices[vertex_index] = true;
+        				K.add(vertex_index, vertex_index, penalty_coefficient);
+        				F[vertex_index] += penalty_coefficient * values[vertex_index];
+        			}
+        		}
+        	}
+        }
+        
     }
 
     void solve_poisson_problem(
