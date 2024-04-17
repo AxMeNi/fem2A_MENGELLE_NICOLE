@@ -372,8 +372,23 @@ namespace FEM2A {
         std::vector< double >& Fe )
     {
         std::cout << "compute elementary vector (source term)" << '\n';
-        // TODO
+        int max = reference_functions.nb_functions();
+        
+        for (int i = 0; i < max; ++i){
+            double Fe_i = 0;
+            for (int q = 0; q < quadrature.nb_points(); ++q){
+                vertex quad = quadrature.point(q);
+                double w = quadrature.weight(q);
+                double shape_i = reference_functions.evaluate(i, quad);
+                double det = elt_mapping.jacobian(quad);
+                vertex Me = elt_mapping.transform(quad);
+               
+                Fe_i += w*shape_i*source(Me)*det;
+            }
+            Fe.push_back(Fe_i);
+        }
     }
+
 
     void assemble_elementary_neumann_vector(
         const ElementMapping& elt_mapping_1D,
@@ -411,6 +426,7 @@ namespace FEM2A {
         for ( int edge = 0; edge < M.nb_edges(); edge++ ) {
         	int edge_attribute = M.get_edge_attribute(edge);
         	if ( attribute_is_dirichlet[edge_attribute] ) {
+        	// Si edge_attribute vaut 0 alors c'est false et si edge_attribute vaut 1 alors c'est true avec la fonction unit_fct
         		for (int v = 0; v < 2; v++) {
         			int vertex_index = M.get_edge_vertex_index(edge, v);
         			if ( !processed_vertices[vertex_index] ) {
