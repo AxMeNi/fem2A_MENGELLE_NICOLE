@@ -143,6 +143,8 @@ namespace FEM2A {
     		return 1.0; // Toujours renvoyer 1 pour n'importe quelle valeur de vertex
 	}
 	
+	
+	
         bool test_assemble_elementary_matrix() {
 	    Mesh mesh;
 	    mesh.load("data/square.mesh");
@@ -185,12 +187,64 @@ namespace FEM2A {
         
         
         bool test_apply_dirichlet_boundary_conditions() {
-        	
+        	// A IMPLENTER
         	
         	return true;
         }
         
+        bool test_assemble_elementary_vector() {
+       	    Mesh mesh;
+	    mesh.load("data/square.mesh");
+	    ElementMapping elt_mapping(mesh, false, 4);
+	    
+	    ShapeFunctions reference_functions(2, 1);
+	    
+	    Quadrature quad;
+	    Quadrature quadrature = quad.get_quadrature(2, false);
+	    
+	    std::vector <double> Fe_in;
+	    
+	    // Assemblage de la matrice élémentaire en utilisant la fonction de pointeur constant_coefficient
+	    assemble_elementary_vector(elt_mapping, reference_functions, quadrature, constant_coefficient, Fe_in ) ;
+	    for (int i = 0 ; i < 3 ; i++){
+	    	
+	    	std::cout << Fe_in[i] << "\n";
+	    }
+	    
+	    return true;
+	
+        }
         
+        bool test_local_to_global_vector() {
+        	Mesh mesh;
+		mesh.load("data/square.mesh");
+		ElementMapping elt_mapping(mesh, false, 4);
+		    
+		ShapeFunctions reference_functions(2, 1);
+		    
+		Quadrature quad;
+		Quadrature quadrature = quad.get_quadrature(2, false);
+		    
+		std::vector <double> Fe_in;
+		    
+	   	assemble_elementary_vector(elt_mapping, reference_functions, quadrature, constant_coefficient, Fe_in);
+	   	
+	   	std::vector <double> F (mesh.nb_vertices());
+        	local_to_global_vector(mesh, false, 4, Fe_in, F );
+        	for (int i = 0; i < mesh.nb_vertices() ; ++i) {
+        		std::cout << F[i] << "\n"; 
+        	}
+        	for (int i = 0; i < 3 ; ++i) {
+        		std::cout << mesh.get_triangle_vertex_index(4,i) << "\n"; 
+        	}
+        		
+        	return true;
+        }
+        
+        bool test_assemble_elementary_neumann_vector() {
+        	// A IMPLEMENTER
+        	return true
+        }
     }
 }
 
