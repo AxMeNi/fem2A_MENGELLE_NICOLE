@@ -186,10 +186,47 @@ namespace FEM2A {
         }
         
         
-        bool test_apply_dirichlet_boundary_conditions() {
-        	// A IMPLENTER
-        	
-        	return true;
+        bool test_apply_dirichlet_boundary_conditions()
+        {
+            Mesh mesh;
+            mesh.load("data/square.mesh");
+            
+            mesh.set_attribute( constant_coefficient, 0, true );
+            
+            ShapeFunctions reference_functions(2,1);
+            Quadrature quadrat = Quadrature::get_quadrature(0,false);
+            DenseMatrix Ke ;
+            SparseMatrix K(mesh.nb_vertices() * quadrat.nb_points());
+            
+            
+            for (int i=0 ; i<mesh.nb_triangles(); ++i)
+            {
+                ElementMapping element(mesh, false, i);
+                assemble_elementary_matrix(element, reference_functions, quadrat, constant_coefficient, Ke);
+                local_to_global_matrix(mesh, i, Ke, K);
+            }
+            
+            std::vector< double > F(mesh.nb_vertices(), 1);
+            
+            std::vector< bool > attribute_bool(1, true);
+            std::vector< double > values(mesh.nb_vertices());
+            
+            for (int i =0 ; i<mesh.nb_vertices(); ++i)
+            {
+                values[i] = mesh.get_vertex(i).x + mesh.get_vertex(i).y; 
+            }
+            
+            apply_dirichlet_boundary_conditions(mesh, attribute_bool, values, K, F);
+            
+            std::vector< double > x(mesh.nb_vertices(), 0);
+            solve(K,F, x);
+            
+            for (double xi :x)
+            {
+                std::cout << xi << '\t';
+            }
+            
+            return true;
         }
         
         bool test_assemble_elementary_vector() {
@@ -232,7 +269,7 @@ namespace FEM2A {
 	   	std::vector <double> F (mesh.nb_vertices());
         	local_to_global_vector(mesh, false, 4, Fe_in, F );
         	for (int i = 0; i < mesh.nb_vertices() ; ++i) {
-        		std::cout << F[i] << "\n"; 
+        		std::cout << F[i] << "\t"; 
         	}
         	for (int i = 0; i < 3 ; ++i) {
         		std::cout << mesh.get_triangle_vertex_index(4,i) << "\n"; 
@@ -243,7 +280,7 @@ namespace FEM2A {
         
         bool test_assemble_elementary_neumann_vector() {
         	// A IMPLEMENTER
-        	return true
+        	return true;
         }
     }
 }

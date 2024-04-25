@@ -351,14 +351,15 @@ namespace FEM2A {
         const DenseMatrix& Ke,
         SparseMatrix& K )
     {
-        //std::cout << "Ke -> K" << '\n';
-        //TODO
         // Ke et K sont symétriques
-	for (int i = 0; i < 3; i++) {
-		for (int j = 0; j < 3; j++) {
-			int glob_id1 = M.get_triangle_vertex_index(t, i);
+	for (int i = 0; i < 3; i++) 
+	{
+		int glob_id1 = M.get_triangle_vertex_index(t, i);
+		for (int j = 0; j < 3; j++) 
+		{
 			int glob_id2 = M.get_triangle_vertex_index(t, j);
 			K.add(glob_id1, glob_id2, Ke.get(i,j));
+			K.add(glob_id2, glob_id1, Ke.get(i,j));
 		}
 	}
 	// K.print();
@@ -371,20 +372,20 @@ namespace FEM2A {
         double (*source)(vertex),
         std::vector< double >& Fe )
     {
-        std::cout << "compute elementary vector (source term)" << '\n';
+
         int max = reference_functions.nb_functions();
+        Fe.resize(max);
         
         for (int i = 0; i < max; ++i){
-            double Fe_i = 0.;
+            Fe[i] = 0.;
             for (int q = 0; q < quadrature.nb_points(); ++q){
                 vertex pt_dintegration = quadrature.point(q);
                 double w = quadrature.weight(q);
                 double shape_i = reference_functions.evaluate(i, pt_dintegration);
                 double det = elt_mapping.jacobian(pt_dintegration);
                
-                Fe_i += w*shape_i*source(pt_dintegration)*det;
+                Fe[i] += w*shape_i*source(pt_dintegration)*det;
             }
-            Fe.push_back(Fe_i);
         }
     }
 
@@ -396,23 +397,22 @@ namespace FEM2A {
         double (*neumann)(vertex),
         std::vector< double >& Fe )
     {
-        std::cout << "compute elementary vector (neumann condition)" << '\n';
         int max = reference_functions_1D.nb_functions();
+        Fe.resize(max);
         
         for (int i = 0; i < max; ++i){
-            double Fe_i = 0.;
+            Fe[i] = 0.;
             for (int q = 0; q < quadrature_1D.nb_points(); ++q){
                 vertex pt_dintegration = quadrature_1D.point(q);
                 double w = quadrature_1D.weight(q);
-                double shape_i = reference_functions.evaluate(i, pt_dintegration);
+                double shape_i = reference_functions_1D.evaluate(i, pt_dintegration);
                 double det = elt_mapping_1D.jacobian(pt_dintegration);
                
-                Fe_i += w*shape_i*source(pt_dintegration)*det;
+                Fe[i] += w*shape_i*neumann(pt_dintegration)*det;
             }
-            Fe.push_back(Fe_i);
         }
     }
-    }
+    
 
     void local_to_global_vector(
         const Mesh& M,
@@ -421,15 +421,22 @@ namespace FEM2A {
         std::vector< double >& Fe,
         std::vector< double >& F )
     {
-        std::cout << "Fe -> F" << '\n';
-        if (border ) {
-        	for (int j = 0; j < Fe.size(); ++j) {
-        		F[M.get_edge_vertex_index(i, j)] += Fe[j];
+
+	F.resize(M.nb_vertices());
+        if (border ) 
+        {
+        	for (int j = 0; j < Fe.size(); ++j) 
+        	{
+        		int global_j = M.get_edge_vertex_index(i, j);
+        		F[global_j] += Fe[j];
         	}
         }
-        else {
-        	for (int j = 0; j < Fe.size(); ++j) {
-        		F[M.get_triangle_vertex_index(i, j)] += Fe[j];
+        else 
+        {
+        	for (int j = 0; j < Fe.size(); ++j) 
+        	{
+        		int global_j = M.get_triangle_vertex_index(i, j);
+        		F[global_j] += Fe[j];
         	}
         }
     }
@@ -463,9 +470,6 @@ namespace FEM2A {
     }
 
 
-
-
-
     void solve_poisson_problem(
             const Mesh& M,
             double (*diffusion_coef)(vertex),
@@ -479,7 +483,6 @@ namespace FEM2A {
         
         
     }
-
 }
 
 
