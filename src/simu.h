@@ -57,6 +57,12 @@ namespace FEM2A {
 		else {return 0;};
 	}
 	
+	double neumann_fct (vertex v)
+	{
+		double nf = sin(M_PI*v.y);
+		return nf;
+	}
+	
         //#################################
         //  Simulations
         //#################################
@@ -269,12 +275,6 @@ namespace FEM2A {
         	Mesh mesh;
 		mesh.load(mesh_filename);
 		
-		//Choix des attributs
-		mesh.set_attribute(region_right, 1, true);  	//Cond de Dirichlet
-		mesh.set_attribute(region_left, 2, true); 	//Cond de Neumann
-		mesh.set_attribute(region_top, 3, true);	//Cond de Neumann nulle
-		mesh.set_attribute(region_bottom, 3, true);	//Cond de Neumann nulle
-		
 		//Initialisation des shape functions
 		ShapeFunctions reference_functions(2, 1);
 		
@@ -298,28 +298,65 @@ namespace FEM2A {
 			
 			// F
 			std::vector <double> Fe_in;
-			assemble_elementary_vector (elt_mapping, reference_functions, quadrature, sinus_bump_coefficient, Fe_in);
+			assemble_elementary_vector (elt_mapping, reference_functions, quadrature, unit_fct, Fe_in);
 			local_to_global_vector(mesh, false, i, Fe_in, F );
 			
 	   	}       	
         	
-        	//Application des conditions de Dirichlet
-        	std::vector< bool > attribute_is_dirichlet (2); 
-        	attribute_is_dirichlet[0] = false; 
-        	attribute_is_dirichlet[1] = true;
-        	attribute_is_dirichlet[2] = false;
-        	attribute_is_dirichlet[3] = false;
-        	
+        	//Initialisation du vecteur de values
         	std::vector< double > values (mesh.nb_vertices(),0);
-
+        	
+        	//Choix des attributs
+		mesh.set_attribute(region_right, 0, true);  	//Cond de Dirichlet
+		mesh.set_attribute(region_left, 1, true); 	//Cond de Neumann
+		mesh.set_attribute(region_top, 2, true);	//Cond de Neumann nulle
+		mesh.set_attribute(region_bottom, 2, true);	//Cond de Neumann nulle
+        	
+        	//Création des booléens qui indiquent quelle action sera à effectuer
+        	std::vector< bool > attribute_is_dirichlet (3); 
+        	attribute_is_dirichlet[0] = true; 
+        	attribute_is_dirichlet[1] = false;
+        	attribute_is_dirichlet[2] = false;
+        	
+        	std::vector< bool > attribute_is_neumann (3);
+        	attribute_is_neumann[0] = false; 
+        	attribute_is_neumann[1] = true;
+        	attribute_is_neumann[2] = false;
+        	
+        	std::vector< bool > attribute_is_neumann_null (3);
+        	attribute_is_neumann_null[0] = false; 
+        	attribute_is_neumann_null[1] = false;
+        	attribute_is_neumann_null[2] = true;
+        	
+		
+		//Application des conditions de Dirichlet sur la frontière droite
         	apply_dirichlet_boundary_conditions(mesh, attribute_is_dirichlet, values, K, F);
         	
-        	//Application des conditions de Neumann
+        	//Application des conditions de Neumann sur les autres forntières
+        	for (int edge_i = 0; edge_i < mesh.nb_edges(); ++ edge_i) //On itère sur tous les bords du maillage
+        	{ 
+        		ElementMapping elt_mapping_1D(mesh, true, edge_i); // On travaille sur les borders avec Neumann
+        		
+        		//On applique d'abord la conditon de Neumann non nulle sur la frontière gauche
+        		if (attribute_is_neumann[mesh.get_edge_attribute(edge_i)]) 
+        		{
+        			std::vector <double> Fe_in;
+				assemble_elementary_neumann_vector(elt_mapping_1D, reference_functions, quadrature, neumann_fct, Fe_in);
+				local_to_global_vector(mesh, true, edge_i, Fe_in, F );
+        		}
+        		
+        		//On applique ensuite la condition de Neumann nulle sur les frontières en haut et en bas
+        		if (attribute_is_neumann_null[mesh.get_edge_attribute(edge_i)])
+        		{
+        			std::vector <double> Fe_in;
+        			assemble_elementary_neumann_vector(elt_mapping_1D, reference_functions, quadrature, zero_fct, Fe_in);
+				local_to_global_vector(mesh, true, edge_i, Fe_in, F );
+        		}
         	
+        	}
         	
         	//Recherche de la solution
         	std::vector<double> x (mesh.nb_vertices(),0);
-        	
         	FEM2A::solve(K,F,x);
         	
         	//Création du fichier de solution
@@ -329,12 +366,7 @@ namespace FEM2A {
         	mesh.save(sol_path + "mesh");
         	save_solution( x, sol_path + "bb");
         	
-        	//for(int vertice ; vertice<mesh.nb_vertices();++vertice)
-            	//{
-                //	x[i] -= sin(M_PI*mesh.get_vertex(vertice).x)*sin(M_PI*mesh.get_vertex(vertice).y);
-            	//}
-            	//save_solution( x, sol_path + "bb");
-            		
+
         }
         
         
