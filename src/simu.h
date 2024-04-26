@@ -33,35 +33,67 @@ namespace FEM2A {
     		return coeff; 
 	}
 	
+	//Regions pour le pb du carré avec les conditions de Neumann
 	double region_top (vertex v)
 	{
-		if (v.y == 1) {return 1;}
-		else {return 0;};
+		if (v.y == 1) {return 1.;}
+		else {return -1.;};
 	}
 	
 	double region_bottom (vertex v)
 	{
-		if (v.y == 0) {return 1;}
-		else {return 0;};
+		if (v.y == 0) {return 1.;}
+		else {return -1.;};
 	}
 	
 	double region_right (vertex v)
 	{
-		if (v.x == 1) {return 1;}
-		else {return 0;};
+		if (v.x == 1) {return 1.;}
+		else {return -1.;};
 	}
 	
 	double region_left (vertex v)
 	{
-		if (v.x == 0) {return 1;}
-		else {return 0;};
+		if (v.x == 0) {return 1.;}
+		else {return -1.;};
 	}
 	
+	//Fonction de Neumann pour le pb du carré
 	double neumann_fct (vertex v)
 	{
 		double nf = sin(M_PI*v.y);
 		return nf;
 	}
+	
+	//Regions du mug
+	double region_hot_liquid (vertex v) //Region chaude car en contact avec le liquide
+	{
+		if (((v.y == 1) && (v.x >= 1) && (v.x <= 20)) 	//Bas
+		 ||((v.x == 1) && (v.y >= 1) && (v.y <= 10)) 	//Cote gauche
+		 ||((v.x == 20) && (v.y >= 1) && (v.y <= 10))) 	//Cote droit
+		 	{return 1.;}
+		else {return -1.;}
+		
+	}
+	
+	double region_free_air (vertex v) //Region a lair libre
+	{
+		if (((v.y == 1) && (v.x >= 1) && (v.x <= 20)) 	//Bas
+		 ||((v.x == 1) && (v.y >= 1) && (v.y <= 10)) 	//Cote gauche
+		 ||((v.x == 20) && (v.y >= 1) && (v.y <= 10))) 	//Cote droit
+		 	{return -1.;}
+		else {return 1.;}
+		
+	}
+	
+	double constant_flux (vertex v) //Flux constant neumann pour le pb du mug
+	{
+		return -0.1;
+	}
+	
+	
+	
+		
 	
         //#################################
         //  Simulations
@@ -106,6 +138,7 @@ namespace FEM2A {
         	attribute_is_dirichlet[0] = false; 
         	attribute_is_dirichlet[1] = true; 
         	
+        	//Initialisation du vecteur de values pour Dirichlet
         	std::vector< double > values (mesh.nb_vertices());
         	for (int i = 0; i < mesh.nb_vertices() ; i++) {
         		values[i] = xy_fct(mesh.get_vertex(i));
@@ -175,12 +208,13 @@ namespace FEM2A {
         	attribute_is_dirichlet[0] = false; 
         	attribute_is_dirichlet[1] = true; 
         	
-        	std::vector< double > values (mesh.nb_vertices(),0);
+        	//Initialisation du vecteur de values pour Dirichlet
+        	std::vector< double > values (mesh.nb_vertices(),0.);
  
         	apply_dirichlet_boundary_conditions(mesh, attribute_is_dirichlet, values, K, F);
         	
         	//Recherche de la solution
-        	std::vector<double> x (mesh.nb_vertices(),0);
+        	std::vector<double> x (mesh.nb_vertices(),0.);
         	
         	FEM2A::solve(K,F,x);
         	
@@ -240,12 +274,13 @@ namespace FEM2A {
         	attribute_is_dirichlet[0] = false; 
         	attribute_is_dirichlet[1] = true; 
         	
-        	std::vector< double > values (mesh.nb_vertices(),0);
+        	//Initialisation du vecteur de values pour Dirichlet
+        	std::vector< double > values (mesh.nb_vertices(),0.);
  
         	apply_dirichlet_boundary_conditions(mesh, attribute_is_dirichlet, values, K, F);
         	
         	//Recherche de la Solution
-        	std::vector<double> x (mesh.nb_vertices(),0);
+        	std::vector<double> x (mesh.nb_vertices(),0.);
         	
         	FEM2A::solve(K,F,x);
         	
@@ -304,14 +339,12 @@ namespace FEM2A {
 			
 	   	}       	
         	
-        	//Initialisation du vecteur de values
+        	//Initialisation du vecteur de values pour Dirichlet
         	std::vector< double > values (mesh.nb_vertices(),0);
         	
         	//Choix des attributs
-		mesh.set_attribute(region_right, 0, true);  	//Cond de Dirichlet
-		mesh.set_attribute(region_left, 1, true); 	//Cond de Neumann
-		mesh.set_attribute(region_top, 2, true);	//Cond de Neumann nulle
-		mesh.set_attribute(region_bottom, 2, true);	//Cond de Neumann nulle
+		mesh.set_attribute(region_hot_liquid, 0, true);  	//Cond de Dirichlet
+		mesh.set_attribute(region_free_air, 1, true); 	//Cond de Neumann
         	
         	//Création des booléens qui indiquent quelle action sera à effectuer
         	std::vector< bool > attribute_is_dirichlet (3); 
@@ -357,7 +390,7 @@ namespace FEM2A {
         	}
         	
         	//Recherche de la solution
-        	std::vector<double> x (mesh.nb_vertices(),0);
+        	std::vector<double> x (mesh.nb_vertices(),0.);
         	FEM2A::solve(K,F,x);
         	
         	//Création du fichier de solution
@@ -370,6 +403,92 @@ namespace FEM2A {
 
         }
         
+        
+        
+        
+        void mug_pb( const std::string& mesh_filename, bool verbose )
+	{
+            	std::cout << "Solving a Dirichlet problem with source term" << std::endl;
+            	if ( verbose ) 
+            	{
+                	std::cout << " with lots of printed details..." << std::endl;
+            	}
+        	Mesh mesh;
+		mesh.load(mesh_filename);
+		
+		//Initialisation des shape functions
+		ShapeFunctions reference_functions(2, 1); // Pour les triangles
+		ShapeFunctions reference_functions_1D(1, 1); // Pour les edges
+		
+		//Initialisation de la quadrature
+		Quadrature quadrature = Quadrature::get_quadrature(2, false);
+		
+		//Initiatlisation de F et de K
+		SparseMatrix K (mesh.nb_vertices());
+		std::vector< double > F (mesh.nb_vertices(), 0.);
+		
+		//Création F et Fe
+		for (int tri = 0; tri < mesh.nb_triangles(); tri++) 
+		{
+			ElementMapping elt_mapping( mesh, false, tri);		
+				
+			// K
+			DenseMatrix Ke_in;
+			Ke_in.set_size(3,3);
+			assemble_elementary_matrix (elt_mapping, reference_functions, quadrature, unit_fct, Ke_in);
+			local_to_global_matrix(mesh, tri, Ke_in, K);
+			
+			//On touche pas a F car pas de terme source ici (cf le premier pb)
+			
+	   	}       	
+        	
+        	//Initialisation du vecteur de values pour Dirichlet
+        	std::vector< double > values (mesh.nb_vertices(),100.);
+        	
+        	//Choix des attributs
+		mesh.set_attribute(region_right, 0, true);  	//Cond de Dirichlet
+		mesh.set_attribute(region_left, 1, true); 	//Cond de Neumann
+        	
+        	//Création des booléens qui indiquent quelle action sera à effectuer
+        	std::vector< bool > attribute_is_dirichlet (2); 
+        	attribute_is_dirichlet[0] = true; 
+        	attribute_is_dirichlet[1] = false;
+        	
+        	std::vector< bool > attribute_is_neumann (2);
+        	attribute_is_neumann[0] = false; 
+        	attribute_is_neumann[1] = true;
+		
+		//Application des conditions de Dirichlet sur la frontière droite
+        	apply_dirichlet_boundary_conditions(mesh, attribute_is_dirichlet, values, K, F);
+        	
+        	//Application des conditions de Neumann sur les autres forntières
+        	for (int edge_i = 0; edge_i < mesh.nb_edges(); ++ edge_i) //On itère sur tous les bords du maillage
+        	{ 
+        		ElementMapping elt_mapping_1D(mesh, true, edge_i); // On travaille sur les borders avec Neumann
+        		
+        		//On applique d'abord la conditon de Neumann non nulle sur la frontière gauche
+        		if (attribute_is_neumann[mesh.get_edge_attribute(edge_i)]) 
+        		{
+        			std::vector <double> Fe_in;
+				assemble_elementary_neumann_vector(elt_mapping_1D, reference_functions_1D, quadrature, constant_flux, Fe_in);
+				local_to_global_vector(mesh, true, edge_i, Fe_in, F );
+        		}
+        	
+        	}
+        	
+        	//Recherche de la solution
+        	std::vector<double> x (mesh.nb_vertices(),0);
+        	FEM2A::solve(K,F,x);
+        	
+        	//Création du fichier de solution
+        	std::string solution_name;
+        	solution_name.assign(mesh_filename.begin() + 5, mesh_filename.end()-4);
+        	std::string sol_path = "solutions/mug_pb_" + solution_name;
+        	mesh.save(sol_path + "mesh");
+        	save_solution( x, sol_path + "bb");
+        	
+
+        }
     }
 
 }
