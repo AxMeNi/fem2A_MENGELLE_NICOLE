@@ -41,7 +41,7 @@ namespace FEM2A {
 	
 	double region_bottom (vertex v)
 	{
-		if (v.y = 0) {return 1;}
+		if (v.y == 0) {return 1;}
 		else {return 0;};
 	}
 	
@@ -276,7 +276,8 @@ namespace FEM2A {
 		mesh.load(mesh_filename);
 		
 		//Initialisation des shape functions
-		ShapeFunctions reference_functions(2, 1);
+		ShapeFunctions reference_functions(2, 1); // Pour les triangles
+		ShapeFunctions reference_functions_1D(1, 1); // Pour les edges
 		
 		//Initialisation de la quadrature
 		Quadrature quadrature = Quadrature::get_quadrature(2, false);
@@ -285,21 +286,21 @@ namespace FEM2A {
 		SparseMatrix K (mesh.nb_vertices());
 		std::vector< double > F (mesh.nb_vertices(), 0.);
 		
-		///Création F et Fe
-		for (int i = 0; i < mesh.nb_triangles(); i++) 
+		//Création F et Fe
+		for (int tri = 0; tri < mesh.nb_triangles(); tri++) 
 		{
-			ElementMapping elt_mapping( mesh, false, i);		
+			ElementMapping elt_mapping( mesh, false, tri);		
 				
 			// K
 			DenseMatrix Ke_in;
 			Ke_in.set_size(3,3);
 			assemble_elementary_matrix (elt_mapping, reference_functions, quadrature, unit_fct, Ke_in);
-			local_to_global_matrix(mesh, i, Ke_in, K);
+			local_to_global_matrix(mesh, tri, Ke_in, K);
 			
 			// F
 			std::vector <double> Fe_in;
 			assemble_elementary_vector (elt_mapping, reference_functions, quadrature, unit_fct, Fe_in);
-			local_to_global_vector(mesh, false, i, Fe_in, F );
+			local_to_global_vector(mesh, false, tri, Fe_in, F );
 			
 	   	}       	
         	
@@ -341,7 +342,7 @@ namespace FEM2A {
         		if (attribute_is_neumann[mesh.get_edge_attribute(edge_i)]) 
         		{
         			std::vector <double> Fe_in;
-				assemble_elementary_neumann_vector(elt_mapping_1D, reference_functions, quadrature, neumann_fct, Fe_in);
+				assemble_elementary_neumann_vector(elt_mapping_1D, reference_functions_1D, quadrature, neumann_fct, Fe_in);
 				local_to_global_vector(mesh, true, edge_i, Fe_in, F );
         		}
         		
@@ -349,7 +350,7 @@ namespace FEM2A {
         		if (attribute_is_neumann_null[mesh.get_edge_attribute(edge_i)])
         		{
         			std::vector <double> Fe_in;
-        			assemble_elementary_neumann_vector(elt_mapping_1D, reference_functions, quadrature, zero_fct, Fe_in);
+        			assemble_elementary_neumann_vector(elt_mapping_1D, reference_functions_1D, quadrature, zero_fct, Fe_in);
 				local_to_global_vector(mesh, true, edge_i, Fe_in, F );
         		}
         	
@@ -368,10 +369,6 @@ namespace FEM2A {
         	
 
         }
-        
-        
-        
-        
         
     }
 
