@@ -446,8 +446,8 @@ namespace FEM2A {
         	std::vector< double > values (mesh.nb_vertices(),100.);
         	
         	//Choix des attributs
-		mesh.set_attribute(region_right, 0, true);  	//Cond de Dirichlet
-		mesh.set_attribute(region_left, 1, true); 	//Cond de Neumann
+		mesh.set_attribute(region_hot_liquid, 0, true);  	//Cond de Dirichlet
+		mesh.set_attribute(region_free_air, 1, true); 	//Cond de Neumann
         	
         	//Création des booléens qui indiquent quelle action sera à effectuer
         	std::vector< bool > attribute_is_dirichlet (2); 
