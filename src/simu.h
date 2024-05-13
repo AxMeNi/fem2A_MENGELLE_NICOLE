@@ -343,8 +343,10 @@ namespace FEM2A {
         	std::vector< double > values (mesh.nb_vertices(),0);
         	
         	//Choix des attributs
-		mesh.set_attribute(region_hot_liquid, 0, true);  	//Cond de Dirichlet
-		mesh.set_attribute(region_free_air, 1, true); 	//Cond de Neumann
+		mesh.set_attribute(region_right, 0, true);  	//Cond de Dirichlet
+		mesh.set_attribute(region_left, 1, true); 	//Cond de Neumann
+		mesh.set_attribute(region_top, 2, true);	//Cond de Neumann nulle
+		mesh.set_attribute(region_bottom, 2, true);	//Cond de Neumann nulle
         	
         	//Création des booléens qui indiquent quelle action sera à effectuer
         	std::vector< bool > attribute_is_dirichlet (3); 
@@ -466,7 +468,7 @@ namespace FEM2A {
         	{ 
         		ElementMapping elt_mapping_1D(mesh, true, edge_i); // On travaille sur les borders avec Neumann
         		
-        		//On applique d'abord la conditon de Neumann non nulle sur la frontière gauche
+        		//On applique la conditon de Neumann 
         		if (attribute_is_neumann[mesh.get_edge_attribute(edge_i)]) 
         		{
         			std::vector <double> Fe_in;
