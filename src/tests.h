@@ -239,7 +239,7 @@ namespace FEM2A {
 	    Quadrature quad;
 	    Quadrature quadrature = quad.get_quadrature(2, false);
 	    
-	    std::vector <double> Fe;
+	    std::vector <double> Fe (3,0);
 	    
 	    // Assemblage de la matrice élémentaire en utilisant la fonction de pointeur constant_coefficient
 	    assemble_elementary_vector(elt_mapping, reference_functions, quadrature, constant_coefficient, Fe ) ;

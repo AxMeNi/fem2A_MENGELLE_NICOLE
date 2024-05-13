@@ -483,6 +483,72 @@ namespace FEM2A {
 		const int quad_order_2D = 2;
 		const int quad_order_1D = 2;
 		
+		//Initialisation des shape functions
+		ShapeFunctions shp_fcts_2D(2, 1); // Pour les triangles
+		ShapeFunctions shp_fcts_1D(1, 1); // Pour les edges
+		
+		//Initialisation de la quadrature
+		Quadrature quad_2D = Quadrature::get_quadrature(quad_order_2D, false);
+		Quadrature quad_1D = Quadrature::get_quadrature(quad_order_1D, true);
+		
+		//Initiatlisation de F et de K
+		SparseMatrix K (mesh.nb_vertices());
+		DenseMatrix Ke;
+
+		std::vector< double > F (mesh.nb_vertices(), 0.);
+		std::vector <double> Fe_2D (3, 0.);
+		std::vector <double> Fe_1D (2, 0.);
+		
+		for (int tri = 0; tri < mesh.nb_triangles(); tri++) 
+		{
+			ElementMapping elt_mapping_2D( mesh, false, tri);		
+				
+			// K
+			assemble_elementary_matrix (elt_mapping_2D, shp_fcts_2D, quad_2D, diffusion_coef, Ke);
+			local_to_global_matrix(mesh, tri, Ke, K);
+			
+			// F
+			assemble_elementary_vector (elt_mapping_2D, shp_fcts_2D, quad_2D, source_term, Fe_2D);
+			local_to_global_vector(mesh, false, tri, Fe_2D, F );
+			
+	   	}       	
+        	
+        	//Initialisation du vecteur de values pour Dirichlet
+        	std::vector< double > values (mesh.nb_vertices(),0);
+        	
+        	//Creation des booléens qui indiquent quelle action sera a effectuer
+        	std::vector< bool > attribute_is_dirichlet (3, false); 
+        	attribute_is_dirichlet[1] = true;
+        	
+        	std::vector< bool > attribute_is_neumann (3, false);
+        	attribute_is_neumann[2] = true;
+		
+		//Application des conditions de Dirichlet sur la frontière droite
+        	apply_dirichlet_boundary_conditions(mesh, attribute_is_dirichlet, values, K, F);
+        	
+        	//Application des conditions de Neumann sur les autres forntières
+        	for (int edge_i = 0; edge_i < mesh.nb_edges(); ++ edge_i) //On itere sur tous les bords du maillage
+        	{ 
+        		
+        		//On applique dabord la conditon de Neumann non nulle sur la frontière gauche
+        		if (attribute_is_neumann[mesh.get_edge_attribute(edge_i)]) 
+        		{
+        			ElementMapping elt_mapping_1D(mesh, true, edge_i); // On travaille sur les borders avec Neumann
+				assemble_elementary_neumann_vector(elt_mapping_1D, shp_fcts_1D, quad_1D, neumann_fct_square, Fe_1D);
+				local_to_global_vector(mesh, true, edge_i, Fe_1D, F );
+        		}
+        	}
+        	
+        	//Recherche de la solution
+        	std::vector<double> x (mesh.nb_vertices(),0.);
+        	FEM2A::solve(K,F,x);
+        	
+        	//Creation du fichier de solution
+        	std::string solution_name;
+        	solution_name.assign(mesh_filename.begin() + 5, mesh_filename.end()-4);
+        	std::string sol_path = "solutions/neumann_" + solution_name;
+        	mesh.save(sol_path + "mesh");
+        	save_solution( x, sol_path + "bb");
     	}
     }
 }
