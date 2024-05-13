@@ -36,33 +36,34 @@ namespace FEM2A {
 	//Regions pour le pb du carré avec les conditions de Neumann
 	double region_top (vertex v)
 	{
-		if (v.y == 1) {return 1.;}
+		if (v.y >= 0.999999999) {return 1.;}
 		else {return -1.;};
 	}
 	
 	double region_bottom (vertex v)
 	{
-		if (v.y == 0) {return 1.;}
+		if (v.y <= 0.000000001) {return 1.;}
 		else {return -1.;};
 	}
 	
 	double region_right (vertex v)
 	{
-		if (v.x == 1) {return 1.;}
+		if (std::abs(v.x-1.) <= 0.000000001) {return 1.;}
 		else {return -1.;};
 	}
 	
 	double region_left (vertex v)
 	{
-		if (v.x == 0) {return 1.;}
+		if (std::abs(v.x) <= 0.000000001) {return 1.;}
 		else {return -1.;};
 	}
 	
-	//Fonction de Neumann pour le pb du carré
-	double neumann_fct (vertex v)
+	//Fonction de Neumann pour le pb du carre
+	double neumann_fct_square (vertex v)
 	{
-		double nf = sin(M_PI*v.y);
-		return nf;
+		if (region_left(v) == 1)	//Neumann non nul pour le bord gauche
+			{return sin(M_PI*v.y);} 
+		else {return 0;} 		//Neumann nul pour le bord droit
 	}
 	
 	//Regions du mug
@@ -85,6 +86,8 @@ namespace FEM2A {
 		else {return 1.;}
 		
 	}
+	
+	//Fonction de neumann pour le pb du mug
 	
 	double constant_flux (vertex v) //Flux constant neumann pour le pb du mug
 	{
@@ -115,25 +118,24 @@ namespace FEM2A {
 		//Choix des attributs
 		mesh.set_attribute(unit_fct, 1, true);      
 		
-		
 		//Initiatlisation de F et de K
 		SparseMatrix K (mesh.nb_vertices());
-		DenseMatrix Ke_in;
+		DenseMatrix Ke;
+		
 		std::vector< double > F (mesh.nb_vertices(), 0.);
 		
-		///Création de K et F
+		///Creation de K et F
 		for (int i = 0; i < mesh.nb_triangles(); i++) {
 			ElementMapping elt_mapping( mesh, false, i);
-			ShapeFunctions reference_functions(2, 1);
-			Quadrature quadrature = Quadrature::get_quadrature(2,false);
+			ShapeFunctions shp_fcts(2, 1);
+			Quadrature quad = Quadrature::get_quadrature(2,false);
 			// K
 			
-			assemble_elementary_matrix (elt_mapping, reference_functions, quadrature, unit_fct, Ke_in);
-			local_to_global_matrix(mesh, i, Ke_in, K);
+			assemble_elementary_matrix (elt_mapping, shp_fcts, quad, unit_fct, Ke);
+			local_to_global_matrix(mesh, i, Ke, K);
 	   	}       	
         	
         	// Apply dirichlet condition
-        	// cf ligne 414 du fem.cpp
         	std::vector< bool > attribute_is_dirichlet (2); 
         	attribute_is_dirichlet[0] = false; 
         	attribute_is_dirichlet[1] = true; 
@@ -152,7 +154,7 @@ namespace FEM2A {
         	
         	std::string solution_name;
         	solution_name.assign(mesh_filename.begin() + 5, mesh_filename.end()-4);
-        	std::string sol_path = "solutions/pure_dirich" + solution_name;
+        	std::string sol_path = "solutions/pure_dirich_" + solution_name;
         	mesh.save(sol_path + "mesh");
         	save_solution( x, sol_path + "bb");
         }
@@ -171,37 +173,37 @@ namespace FEM2A {
             	}
         	Mesh mesh;
 		mesh.load(mesh_filename);
-		
-		//Choix des attributs
-		mesh.set_attribute(unit_fct, 1, true);      
-		
+
 		//Initialisation des shape functions
-		ShapeFunctions reference_functions(2, 1);
+		ShapeFunctions shp_fcts(2, 1);
 		
 		//Initialisation de la quadrature
-		Quadrature quadrature = Quadrature::get_quadrature(2, false);
+		Quadrature quad = Quadrature::get_quadrature(2, false);
 		
 		//Initiatlisation de F et de K
+		DenseMatrix Ke;
 		SparseMatrix K (mesh.nb_vertices());
+		
+		std::vector <double> Fe(3,0);
 		std::vector< double > F (mesh.nb_vertices(), 0.);
 		
-		///Création F Fe K Ke
+		///Creation F Fe K Ke
 		for (int i = 0; i < mesh.nb_triangles(); i++) 
 		{
 			ElementMapping elt_mapping( mesh, false, i);		
 				
 			// K
-			DenseMatrix Ke_in;
-			Ke_in.set_size(3,3);
-			assemble_elementary_matrix (elt_mapping, reference_functions, quadrature, unit_fct, Ke_in);
-			local_to_global_matrix(mesh, i, Ke_in, K);
+			assemble_elementary_matrix (elt_mapping, shp_fcts, quad, unit_fct, Ke);
+			local_to_global_matrix(mesh, i, Ke, K);
 			
 			// F
-			std::vector <double> Fe_in;
-			assemble_elementary_vector (elt_mapping, reference_functions, quadrature, unit_fct, Fe_in);
-			local_to_global_vector(mesh, false, i, Fe_in, F );
+			assemble_elementary_vector (elt_mapping, shp_fcts, quad, unit_fct, Fe);
+			local_to_global_vector(mesh, false, i, Fe, F );
 			
 	   	}       	
+	   	
+	   	//Choix des attributs
+		mesh.set_attribute(unit_fct, 1, true);      
         	
         	//Application des conditions de Dirichlet
         	std::vector< bool > attribute_is_dirichlet (2); 
@@ -218,56 +220,61 @@ namespace FEM2A {
         	
         	FEM2A::solve(K,F,x);
         	
-        	//Création du fichier de solution
+        	//Creation du fichier de solution
         	std::string solution_name;
         	solution_name.assign(mesh_filename.begin() + 5, mesh_filename.end()-4);
-        	std::string sol_path = "solutions/dirich_source_term_unit_" + solution_name;
+        	std::string sol_path = "solutions/unit_src_trm_" + solution_name;
         	mesh.save(sol_path + "mesh");
         	save_solution( x, sol_path + "bb");
         }
         
         
         
+        
+       	
         void dirichlet_sinus_bump_pb( const std::string& mesh_filename, bool verbose )
 	{
-            	std::cout << "Solving a Dirichlet problem with source term" << std::endl;
+            	std::cout << "Solving a Dirichlet problem with sinus source term" << std::endl;
             	if ( verbose ) 
             	{
                 	std::cout << " with lots of printed details..." << std::endl;
             	}
         	Mesh mesh;
-		mesh.load(mesh_filename);
-		
-		//Choix des attributs
-		mesh.set_attribute(unit_fct, 1, true);      
+		mesh.load(mesh_filename);   
 		
 		//Initialisation des shape functions
-		ShapeFunctions reference_functions(2, 1);
+		ShapeFunctions shp_fcts(2, 1);
 		
 		//Initialisation de la quadrature
-		Quadrature quadrature = Quadrature::get_quadrature(2, false);
+		Quadrature quad = Quadrature::get_quadrature(2, false);
 		
 		//Initiatlisation de F et de K
 		SparseMatrix K (mesh.nb_vertices());
-		std::vector< double > F (mesh.nb_vertices(), 0.);
+		DenseMatrix Ke;
 		
-		///Création F et Fe
+		std::vector< double > F (mesh.nb_vertices(), 0.);
+		std::vector <double> Fe (3,0);
+		
+		///Creation F et Fe
 		for (int i = 0; i < mesh.nb_triangles(); i++) 
 		{
 			ElementMapping elt_mapping( mesh, false, i);		
 				
 			// K
-			DenseMatrix Ke_in;
-			Ke_in.set_size(3,3);
-			assemble_elementary_matrix (elt_mapping, reference_functions, quadrature, unit_fct, Ke_in);
-			local_to_global_matrix(mesh, i, Ke_in, K);
+			
+			Ke.set_size(3,3);
+			assemble_elementary_matrix (elt_mapping, shp_fcts, quad, unit_fct, Ke);
+			local_to_global_matrix(mesh, i, Ke, K);
 			
 			// F
-			std::vector <double> Fe_in;
-			assemble_elementary_vector (elt_mapping, reference_functions, quadrature, sinus_bump_coefficient, Fe_in);
-			local_to_global_vector(mesh, false, i, Fe_in, F );
 			
-	   	}       	
+			assemble_elementary_vector (elt_mapping, shp_fcts, quad, sinus_bump_coefficient, Fe);
+			local_to_global_vector(mesh, false, i, Fe, F );
+			
+	   	}     
+	   	
+	   	//Choix des attributs
+		mesh.set_attribute(unit_fct, 1, true);     	
         	
         	//Application des conditions de Dirichlet
         	std::vector< bool > attribute_is_dirichlet (2); 
@@ -284,19 +291,123 @@ namespace FEM2A {
         	
         	FEM2A::solve(K,F,x);
         	
-        	//Création du fichier de solution
+        	//Creation du fichier de solution
         	std::string solution_name;
         	solution_name.assign(mesh_filename.begin() + 5, mesh_filename.end()-4);
-        	std::string sol_path = "solutions/dirich_source_term_sinus_bump_" + solution_name;
+        	std::string sol_path = "solutions/sinus_src_trm_" + solution_name;
         	mesh.save(sol_path + "mesh");
         	save_solution( x, sol_path + "bb");
         	
-        	//for(int vertice ; vertice<mesh.nb_vertices();++vertice)
-            	//{
-                //	x[i] -= sin(M_PI*mesh.get_vertex(vertice).x)*sin(M_PI*mesh.get_vertex(vertice).y);
-            	//}
-            	//save_solution( x, sol_path + "bb");
             		
+        }
+        
+        void sinus_bump_pb_analytic(const std::string& mesh_filename, bool verbose) {
+                std::cout << "Exact sinus source term solution" << std::endl;
+            	if ( verbose ) 
+            	{
+                	std::cout << " with lots of printed details..." << std::endl;
+            	}
+       		Mesh mesh;
+            	mesh.load(mesh_filename);
+            	
+            	std::vector<double> x(mesh.nb_vertices(),0);
+            	
+            	for (int i=0 ; i<mesh.nb_vertices() ; ++i)
+            	{
+            	    x[i] = std::sin(M_PI*mesh.get_vertex(i).x)*std::sin(M_PI*mesh.get_vertex(i).y);
+            	}
+            	
+                std::string solution_name;
+        	solution_name.assign(mesh_filename.begin() + 5, mesh_filename.end()-4);
+        	std::string sol_path = "solutions/analytic_sinus_src_trm_" + solution_name;
+        	mesh.save(sol_path + "mesh");
+        	save_solution( x, sol_path + "bb");
+            }
+        
+        
+        
+        
+        void diff_pb_sin ( const std::string& mesh_filename, bool verbose )
+        {
+        	std::cout << "Solving a Dirichlet problem with sinus source term" << std::endl;
+            	if ( verbose ) 
+            	{
+                	std::cout << " with lots of printed details..." << std::endl;
+            	}
+        	Mesh mesh;
+		mesh.load(mesh_filename);   
+		
+		//Initialisation des shape functions
+		ShapeFunctions shp_fcts(2, 1);
+		
+		//Initialisation de la quadrature
+		Quadrature quad = Quadrature::get_quadrature(2, false);
+		
+		//Initiatlisation de F et de K
+		SparseMatrix K (mesh.nb_vertices());
+		DenseMatrix Ke;
+		
+		std::vector< double > F (mesh.nb_vertices(), 0.);
+		std::vector <double> Fe (3,0);
+		
+		for (int i = 0; i < mesh.nb_triangles(); i++) 
+		{
+			ElementMapping elt_mapping( mesh, false, i);		
+				
+			// K
+			
+			Ke.set_size(3,3);
+			assemble_elementary_matrix (elt_mapping, shp_fcts, quad, unit_fct, Ke);
+			local_to_global_matrix(mesh, i, Ke, K);
+			
+			// F
+			
+			assemble_elementary_vector (elt_mapping, shp_fcts, quad, sinus_bump_coefficient, Fe);
+			local_to_global_vector(mesh, false, i, Fe, F );
+			
+	   	}     
+	   	
+	   	//Choix des attributs
+		mesh.set_attribute(unit_fct, 1, true);     	
+        	
+        	//Application des conditions de Dirichlet
+        	std::vector< bool > attribute_is_dirichlet (2); 
+        	attribute_is_dirichlet[0] = false; 
+        	attribute_is_dirichlet[1] = true; 
+        	
+        	//Initialisation du vecteur de values pour Dirichlet
+        	std::vector< double > values (mesh.nb_vertices(),0.);
+ 
+        	apply_dirichlet_boundary_conditions(mesh, attribute_is_dirichlet, values, K, F);
+        	
+        	//Recherche de la Solution
+        	std::vector<double> x (mesh.nb_vertices(),0.);
+        	
+        	FEM2A::solve(K,F,x);
+        	
+        	//La solution analytique
+		std::vector<double> x_anal(mesh.nb_vertices(),0);
+            	
+            	for (int i=0 ; i<mesh.nb_vertices() ; ++i)
+            	{
+            	    	x_anal[i] = std::sin(M_PI * mesh.get_vertex(i).x) * std::sin(M_PI * mesh.get_vertex(i).y);
+            	}
+		
+		//Calcul de la diffence
+		std::vector<double> x_diff(mesh.nb_vertices(),0);
+		
+        	for (int i = 0 ; i < mesh.nb_vertices(); i++)
+        	{
+        		x_diff[i] = std::abs(x_anal[i] - x[i]);
+        	}
+        	
+        	//Creation du fichier de solution
+        	std::string solution_name;
+        	solution_name.assign(mesh_filename.begin() + 5, mesh_filename.end()-4);
+        	std::string sol_path = "solutions/diff_sinus_" + solution_name;
+        	mesh.save(sol_path + "mesh");
+        	save_solution( x_diff, sol_path + "bb");
+        	
         }
         
         
@@ -311,31 +422,32 @@ namespace FEM2A {
 		mesh.load(mesh_filename);
 		
 		//Initialisation des shape functions
-		ShapeFunctions reference_functions(2, 1); // Pour les triangles
-		ShapeFunctions reference_functions_1D(1, 1); // Pour les edges
+		ShapeFunctions shp_fcts_2D(2, 1); // Pour les triangles
+		ShapeFunctions shp_fcts_1D(1, 1); // Pour les edges
 		
 		//Initialisation de la quadrature
-		Quadrature quadrature = Quadrature::get_quadrature(2, false);
+		Quadrature quad_2D = Quadrature::get_quadrature(2, false);
+		Quadrature quad_1D = Quadrature::get_quadrature(2, true);
 		
 		//Initiatlisation de F et de K
 		SparseMatrix K (mesh.nb_vertices());
+		DenseMatrix Ke;
+
 		std::vector< double > F (mesh.nb_vertices(), 0.);
+		std::vector <double> Fe_2D (3, 0.);
+		std::vector <double> Fe_1D (2, 0.);
 		
-		//Création F et Fe
 		for (int tri = 0; tri < mesh.nb_triangles(); tri++) 
 		{
-			ElementMapping elt_mapping( mesh, false, tri);		
+			ElementMapping elt_mapping_2D( mesh, false, tri);		
 				
 			// K
-			DenseMatrix Ke_in;
-			Ke_in.set_size(3,3);
-			assemble_elementary_matrix (elt_mapping, reference_functions, quadrature, unit_fct, Ke_in);
-			local_to_global_matrix(mesh, tri, Ke_in, K);
+			assemble_elementary_matrix (elt_mapping_2D, shp_fcts_2D, quad_2D, unit_fct, Ke);
+			local_to_global_matrix(mesh, tri, Ke, K);
 			
 			// F
-			std::vector <double> Fe_in;
-			assemble_elementary_vector (elt_mapping, reference_functions, quadrature, unit_fct, Fe_in);
-			local_to_global_vector(mesh, false, tri, Fe_in, F );
+			assemble_elementary_vector (elt_mapping_2D, shp_fcts_2D, quad_2D, unit_fct, Fe_2D);
+			local_to_global_vector(mesh, false, tri, Fe_2D, F );
 			
 	   	}       	
         	
@@ -343,59 +455,39 @@ namespace FEM2A {
         	std::vector< double > values (mesh.nb_vertices(),0);
         	
         	//Choix des attributs
-		mesh.set_attribute(region_right, 0, true);  	//Cond de Dirichlet
-		mesh.set_attribute(region_left, 1, true); 	//Cond de Neumann
-		mesh.set_attribute(region_top, 2, true);	//Cond de Neumann nulle
-		mesh.set_attribute(region_bottom, 2, true);	//Cond de Neumann nulle
+		mesh.set_attribute(region_right, 1, true);  	//Cond de Dirichlet
+		mesh.set_attribute(region_left, 2, true); 	//Cond de Neumann - non nulle
+		mesh.set_attribute(region_top, 2, true); 	//Cond de Neumann - nulle
+		mesh.set_attribute(region_bottom, 2, true); 	//Cond de Neumann - nulle
+
+        	//Creation des booléens qui indiquent quelle action sera a effectuer
+        	std::vector< bool > attribute_is_dirichlet (3, false); 
+        	attribute_is_dirichlet[1] = true;
         	
-        	//Création des booléens qui indiquent quelle action sera à effectuer
-        	std::vector< bool > attribute_is_dirichlet (3); 
-        	attribute_is_dirichlet[0] = true; 
-        	attribute_is_dirichlet[1] = false;
-        	attribute_is_dirichlet[2] = false;
-        	
-        	std::vector< bool > attribute_is_neumann (3);
-        	attribute_is_neumann[0] = false; 
-        	attribute_is_neumann[1] = true;
-        	attribute_is_neumann[2] = false;
-        	
-        	std::vector< bool > attribute_is_neumann_null (3);
-        	attribute_is_neumann_null[0] = false; 
-        	attribute_is_neumann_null[1] = false;
-        	attribute_is_neumann_null[2] = true;
-        	
+        	std::vector< bool > attribute_is_neumann (3, false);
+        	attribute_is_neumann[2] = true;
 		
 		//Application des conditions de Dirichlet sur la frontière droite
         	apply_dirichlet_boundary_conditions(mesh, attribute_is_dirichlet, values, K, F);
         	
         	//Application des conditions de Neumann sur les autres forntières
-        	for (int edge_i = 0; edge_i < mesh.nb_edges(); ++ edge_i) //On itère sur tous les bords du maillage
+        	for (int edge_i = 0; edge_i < mesh.nb_edges(); ++ edge_i) //On itere sur tous les bords du maillage
         	{ 
-        		ElementMapping elt_mapping_1D(mesh, true, edge_i); // On travaille sur les borders avec Neumann
         		
-        		//On applique d'abord la conditon de Neumann non nulle sur la frontière gauche
+        		//On applique dabord la conditon de Neumann non nulle sur la frontière gauche
         		if (attribute_is_neumann[mesh.get_edge_attribute(edge_i)]) 
         		{
-        			std::vector <double> Fe_in;
-				assemble_elementary_neumann_vector(elt_mapping_1D, reference_functions_1D, quadrature, neumann_fct, Fe_in);
-				local_to_global_vector(mesh, true, edge_i, Fe_in, F );
+        			ElementMapping elt_mapping_1D(mesh, true, edge_i); // On travaille sur les borders avec Neumann
+				assemble_elementary_neumann_vector(elt_mapping_1D, shp_fcts_1D, quad_1D, neumann_fct_square, Fe_1D);
+				local_to_global_vector(mesh, true, edge_i, Fe_1D, F );
         		}
-        		
-        		//On applique ensuite la condition de Neumann nulle sur les frontières en haut et en bas
-        		if (attribute_is_neumann_null[mesh.get_edge_attribute(edge_i)])
-        		{
-        			std::vector <double> Fe_in;
-        			assemble_elementary_neumann_vector(elt_mapping_1D, reference_functions_1D, quadrature, zero_fct, Fe_in);
-				local_to_global_vector(mesh, true, edge_i, Fe_in, F );
-        		}
-        	
         	}
         	
         	//Recherche de la solution
         	std::vector<double> x (mesh.nb_vertices(),0.);
         	FEM2A::solve(K,F,x);
         	
-        	//Création du fichier de solution
+        	//Creation du fichier de solution
         	std::string solution_name;
         	solution_name.assign(mesh_filename.begin() + 5, mesh_filename.end()-4);
         	std::string sol_path = "solutions/neumann_" + solution_name;
@@ -418,27 +510,30 @@ namespace FEM2A {
         	Mesh mesh;
 		mesh.load(mesh_filename);
 		
-		//Initialisation des shape functions
-		ShapeFunctions reference_functions(2, 1); // Pour les triangles
-		ShapeFunctions reference_functions_1D(1, 1); // Pour les edges
+		//Initialisation des shape fcts
+		ShapeFunctions shp_fcts_2D(2, 1); // Pour les triangles
+		ShapeFunctions shp_fcts_1D(1, 1); // Pour les edges
 		
 		//Initialisation de la quadrature
-		Quadrature quadrature = Quadrature::get_quadrature(2, false);
+		Quadrature quad_2D = Quadrature::get_quadrature(2, false);
+		Quadrature quad_1D = Quadrature::get_quadrature(2, true);
 		
 		//Initiatlisation de F et de K
 		SparseMatrix K (mesh.nb_vertices());
-		std::vector< double > F (mesh.nb_vertices(), 0.);
+		DenseMatrix Ke;
 		
-		//Création F et Fe
+		std::vector< double > F (mesh.nb_vertices(), 0.);
+		std::vector <double> Fe_1D(2,0);
+		
 		for (int tri = 0; tri < mesh.nb_triangles(); tri++) 
 		{
-			ElementMapping elt_mapping( mesh, false, tri);		
+			ElementMapping elt_mapping_2D( mesh, false, tri);		
 				
 			// K
-			DenseMatrix Ke_in;
-			Ke_in.set_size(3,3);
-			assemble_elementary_matrix (elt_mapping, reference_functions, quadrature, unit_fct, Ke_in);
-			local_to_global_matrix(mesh, tri, Ke_in, K);
+			
+			Ke.set_size(3,3);
+			assemble_elementary_matrix (elt_mapping_2D, shp_fcts_2D, quad_2D, unit_fct, Ke);
+			local_to_global_matrix(mesh, tri, Ke, K);
 			
 			//On touche pas a F car pas de terme source ici (cf le premier pb)
 			
@@ -448,41 +543,38 @@ namespace FEM2A {
         	std::vector< double > values (mesh.nb_vertices(),100.);
         	
         	//Choix des attributs
-		mesh.set_attribute(region_hot_liquid, 0, true);  	//Cond de Dirichlet
-		mesh.set_attribute(region_free_air, 1, true); 	//Cond de Neumann
+		mesh.set_attribute(region_hot_liquid, 1, true);  	//Cond de Dirichlet
+		mesh.set_attribute(region_free_air, 2, true); 	//Cond de Neumann
         	
-        	//Création des booléens qui indiquent quelle action sera à effectuer
-        	std::vector< bool > attribute_is_dirichlet (2); 
-        	attribute_is_dirichlet[0] = true; 
-        	attribute_is_dirichlet[1] = false;
+        	//Creation des booléens qui indiquent quelle action sera a effectuer
+        	std::vector< bool > attribute_is_dirichlet (3, false); 
+        	attribute_is_dirichlet[1] = true;
         	
-        	std::vector< bool > attribute_is_neumann (2);
-        	attribute_is_neumann[0] = false; 
-        	attribute_is_neumann[1] = true;
+        	std::vector< bool > attribute_is_neumann (3, false);
+        	attribute_is_neumann[2] = true;
+        	
 		
-		//Application des conditions de Dirichlet sur la frontière droite
+		//Application des conditions de Dirichlet sur la frontiere droite
         	apply_dirichlet_boundary_conditions(mesh, attribute_is_dirichlet, values, K, F);
         	
-        	//Application des conditions de Neumann sur les autres forntières
-        	for (int edge_i = 0; edge_i < mesh.nb_edges(); ++ edge_i) //On itère sur tous les bords du maillage
+        	//Application des conditions de Neumann sur les autres forntieres
+        	for (int edge_i = 0; edge_i < mesh.nb_edges(); ++ edge_i) //On itere sur tous les bords du maillage
         	{ 
         		ElementMapping elt_mapping_1D(mesh, true, edge_i); // On travaille sur les borders avec Neumann
         		
         		//On applique la conditon de Neumann 
         		if (attribute_is_neumann[mesh.get_edge_attribute(edge_i)]) 
         		{
-        			std::vector <double> Fe_in;
-				assemble_elementary_neumann_vector(elt_mapping_1D, reference_functions_1D, quadrature, constant_flux, Fe_in);
-				local_to_global_vector(mesh, true, edge_i, Fe_in, F );
+				assemble_elementary_neumann_vector(elt_mapping_1D, shp_fcts_1D, quad_1D, constant_flux, Fe_1D);
+				local_to_global_vector(mesh, true, edge_i, Fe_1D, F );
         		}
-        	
         	}
         	
         	//Recherche de la solution
         	std::vector<double> x (mesh.nb_vertices(),0);
         	FEM2A::solve(K,F,x);
         	
-        	//Création du fichier de solution
+        	//Creation du fichier de solution
         	std::string solution_name;
         	solution_name.assign(mesh_filename.begin() + 5, mesh_filename.end()-4);
         	std::string sol_path = "solutions/mug_pb_" + solution_name;

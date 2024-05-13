@@ -359,7 +359,6 @@ namespace FEM2A {
 		{
 			int glob_id2 = M.get_triangle_vertex_index(t, j);
 			K.add(glob_id1, glob_id2, Ke.get(i,j));
-			K.add(glob_id2, glob_id1, Ke.get(i,j));
 		}
 	}
 	// K.print();
@@ -372,20 +371,19 @@ namespace FEM2A {
         double (*source)(vertex),
         std::vector< double >& Fe )
     {
-
-        int max = reference_functions.nb_functions();
-        Fe.resize(max);
+	double somme = 0.;
         
-        for (int i = 0; i < max; ++i){
-            Fe[i] = 0.;
+        for (int i = 0; i < Fe.size(); ++i){
+            somme = 0.;
             for (int q = 0; q < quadrature.nb_points(); ++q){
                 vertex pt_dintegration = quadrature.point(q);
                 double w = quadrature.weight(q);
                 double shape_i = reference_functions.evaluate(i, pt_dintegration);
                 double det = elt_mapping.jacobian(pt_dintegration);
                
-                Fe[i] += w*shape_i*source(pt_dintegration)*det;
+                somme += w*shape_i*source(elt_mapping.transform(pt_dintegration))*det;
             }
+            Fe[i] = somme;
         }
     }
 
@@ -397,19 +395,19 @@ namespace FEM2A {
         double (*neumann)(vertex),
         std::vector< double >& Fe )
     {
-        int max = reference_functions_1D.nb_functions();
-        Fe.resize(max);
+        double somme = 0;
         
-        for (int i = 0; i < max; ++i){
-            Fe[i] = 0.;
+        for (int i = 0; i < Fe.size(); ++i){
+            somme = 0.;
             for (int q = 0; q < quadrature_1D.nb_points(); ++q){
                 vertex pt_dintegration = quadrature_1D.point(q);
                 double w = quadrature_1D.weight(q);
                 double shape_i = reference_functions_1D.evaluate(i, pt_dintegration);
                 double det = elt_mapping_1D.jacobian(pt_dintegration);
                
-                Fe[i] += w*shape_i*neumann(pt_dintegration)*det;
+                somme += w*shape_i*neumann(elt_mapping_1D.transform(pt_dintegration))*det;
             }
+            Fe[i] = somme;
         }
     }
     
@@ -422,8 +420,7 @@ namespace FEM2A {
         std::vector< double >& F )
     {
 
-	F.resize(M.nb_vertices());
-        if (border ) 
+        if (border) 
         {
         	for (int j = 0; j < Fe.size(); ++j) 
         	{
@@ -449,7 +446,7 @@ namespace FEM2A {
         std::vector< double >& F )
     {
         std::cout << "apply dirichlet boundary conditions" << '\n';
-        // TODO prendre p =10 000
+        
         std::vector< bool > processed_vertices(values.size(), false);
         double penalty_coefficient = 10000.;
         for ( int edge = 0; edge < M.nb_edges(); edge++ ) {
@@ -481,7 +478,12 @@ namespace FEM2A {
     {
         std::cout << "solve poisson problem" << '\n';
         
-        
+        if (verbose == 1)
+        {
+		const int quad_order_2D = 2;
+		const int quad_order_1D = 2;
+		
+    	}
     }
 }
 

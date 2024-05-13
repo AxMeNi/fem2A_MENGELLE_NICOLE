@@ -38,7 +38,8 @@ void run_tests()
     const bool t_lcltgbl = false;
     const bool t_cdtdirich = false;
     const bool t_assemble_elementary_vector = false;
-    const bool t_local_to_global_vector = true;
+    const bool t_local_to_global_vector = false;
+    const bool t_assemble_neumann = true;
 
     if( t_opennl ) test_opennl();
     if( t_lmesh ) Tests::test_load_mesh();
@@ -51,6 +52,7 @@ void run_tests()
     if( t_cdtdirich) Tests::test_apply_dirichlet_boundary_conditions();
     if( t_assemble_elementary_vector) Tests::test_assemble_elementary_vector();
     if (t_local_to_global_vector ) Tests::test_local_to_global_vector();
+    if (t_assemble_neumann ) Tests::test_assemble_elementary_neumann_vector();
 }
 
 void run_simu()
@@ -59,6 +61,8 @@ void run_simu()
     const bool simu_pure_dirichlet = false;
     const bool simu_dirichlet_source_term = false;
     const bool simu_sinus_bump = false;
+    const bool simu_analytic_sinus_bumb = false;
+    const bool simu_diff_sin = false;
     const bool simu_neumann_pb = false;
     const bool simu_mug_pb = true;
 
@@ -67,12 +71,12 @@ void run_simu()
 
     if( simu_pure_dirichlet ) 
     {
-        Simu::pure_dirichlet_pb("data/square_fine.mesh", verbose);
+        Simu::pure_dirichlet_pb("data/square.mesh", verbose);
     }
     
     if (simu_dirichlet_source_term ) 
     {
-    	Simu::dirichlet_pb_source_term("data/square_fine.mesh", verbose );
+    	Simu::dirichlet_pb_source_term("data/square.mesh", verbose );
     }
     
     if (simu_sinus_bump ) 
@@ -80,15 +84,26 @@ void run_simu()
     	Simu::dirichlet_sinus_bump_pb("data/square_fine.mesh", verbose );
     }
     
+    if (simu_analytic_sinus_bumb)
+    {
+    	Simu::sinus_bump_pb_analytic("data/square_fine.mesh", verbose);
+    }
+    
+    if (simu_diff_sin)
+    {
+    	Simu::diff_pb_sin("data/square_fine.mesh", verbose);
+    }
+        
     if (simu_neumann_pb )
     {
-    	Simu::neumann_pb("data/square_fine.mesh", verbose );
+    	Simu::neumann_pb("data/square.mesh", verbose );
     }
     
     if (simu_mug_pb )
     {
-    	Simu::mug_pb("data/mug_1.mesh", verbose);
+    	Simu::mug_pb("data/mug_0_5.mesh", verbose);
     }
+    
 }
 
 int main( int argc, const char * argv[] )

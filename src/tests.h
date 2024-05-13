@@ -155,10 +155,10 @@ namespace FEM2A {
 	    Quadrature quad;
 	    Quadrature quadrature = quad.get_quadrature(2, false);
 	    
-	    DenseMatrix Ke_in;
+	    DenseMatrix Ke;
 	    
 	    // Assemblage de la matrice élémentaire en utilisant la fonction de pointeur constant_coefficient
-	    assemble_elementary_matrix(elt_mapping, reference_functions, quadrature, constant_coefficient, Ke_in);
+	    assemble_elementary_matrix(elt_mapping, reference_functions, quadrature, constant_coefficient, Ke);
 	    
 	    return true;
 	
@@ -175,12 +175,12 @@ namespace FEM2A {
 		Quadrature quad;
 		Quadrature quadrature = quad.get_quadrature(2, false);
 		    
-		DenseMatrix Ke_in;
+		DenseMatrix Ke;
 		    
-	   	assemble_elementary_matrix(elt_mapping, reference_functions, quadrature, constant_coefficient, Ke_in);
+	   	assemble_elementary_matrix(elt_mapping, reference_functions, quadrature, constant_coefficient, Ke);
 	   	
 	   	SparseMatrix K (mesh.nb_vertices());
-        	local_to_global_matrix(mesh, 4, Ke_in, K);
+        	local_to_global_matrix(mesh, 4, Ke, K);
         	
         	return true;
         }
@@ -239,13 +239,13 @@ namespace FEM2A {
 	    Quadrature quad;
 	    Quadrature quadrature = quad.get_quadrature(2, false);
 	    
-	    std::vector <double> Fe_in;
+	    std::vector <double> Fe;
 	    
 	    // Assemblage de la matrice élémentaire en utilisant la fonction de pointeur constant_coefficient
-	    assemble_elementary_vector(elt_mapping, reference_functions, quadrature, constant_coefficient, Fe_in ) ;
+	    assemble_elementary_vector(elt_mapping, reference_functions, quadrature, constant_coefficient, Fe ) ;
 	    for (int i = 0 ; i < 3 ; i++){
 	    	
-	    	std::cout << Fe_in[i] << "\n";
+	    	std::cout << Fe[i] << "\n";
 	    }
 	    
 	    return true;
@@ -262,12 +262,12 @@ namespace FEM2A {
 		Quadrature quad;
 		Quadrature quadrature = quad.get_quadrature(2, false);
 		    
-		std::vector <double> Fe_in;
+		std::vector <double> Fe;
 		    
-	   	assemble_elementary_vector(elt_mapping, reference_functions, quadrature, constant_coefficient, Fe_in);
+	   	assemble_elementary_vector(elt_mapping, reference_functions, quadrature, constant_coefficient, Fe);
 	   	
 	   	std::vector <double> F (mesh.nb_vertices());
-        	local_to_global_vector(mesh, false, 4, Fe_in, F );
+        	local_to_global_vector(mesh, false, 4, Fe, F );
         	for (int i = 0; i < mesh.nb_vertices() ; ++i) {
         		std::cout << F[i] << "\t"; 
         	}
@@ -279,7 +279,26 @@ namespace FEM2A {
         }
         
         bool test_assemble_elementary_neumann_vector() {
-        	// A IMPLEMENTER
+       		Mesh mesh;
+        	mesh.load("data/square.mesh");
+       		ElementMapping elt_mapping(mesh,true,4);
+
+       		ShapeFunctions reference_functions(1,1);
+
+            	Quadrature quad;
+            	Quadrature quadrature = quad.get_quadrature(2,true);
+
+            	std::vector<double> F(mesh.nb_vertices(),0);
+            	std::vector<double> Fe(2,0);
+
+		assemble_elementary_neumann_vector(elt_mapping,reference_functions,quadrature,constant_coefficient,Fe);
+            	local_to_global_vector(mesh,true,4,Fe,F);
+            	
+            	for (double i : Fe)
+            	{
+            		std::cout << i << "\t";
+            	}
+        	
         	return true;
         }
     }
