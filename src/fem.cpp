@@ -474,13 +474,13 @@ namespace FEM2A {
             double (*dirichlet_fct)(vertex),
             double (*neumann_fct)(vertex),
             std::vector<double>& solution,
-            int verbose )
+            bool verbose )
     {
         std::cout << "solve poisson problem" << '\n';
         
-        if (verbose == 1)
+        if (verbose == false)
         {
-		const int quad_order_2D = 2;
+		const int quad_order_2D = 6;
 		const int quad_order_1D = 2;
 
 		//Initialisation des shape functions
@@ -501,7 +501,7 @@ namespace FEM2A {
 
 		//Creation des booleens qui indiquent quelle action sera a effectuer
 		std::vector< bool > attribute_is_dirichlet_and_source(3, false);
-		attribute_is_dirichlet[1] = true;
+		attribute_is_dirichlet_and_source[1] = true;
 
 		std::vector< bool > attribute_is_neumann(3, false);
 		attribute_is_neumann[2] = true;
@@ -509,19 +509,19 @@ namespace FEM2A {
 		// On applique le coefficient de diffusion et le terme source
 		for (int tri = 0; tri < M.nb_triangles(); tri++)
 		{
-		ElementMapping elt_mapping_2D(M, false, tri);
+			ElementMapping elt_mapping_2D(M, false, tri);
 
-		// K
-		assemble_elementary_matrix(elt_mapping_2D, shp_fcts_2D, quad_2D, diffusion_coef, Ke);
-		local_to_global_matrix(M, tri, Ke, K);
+			// K
+			assemble_elementary_matrix(elt_mapping_2D, shp_fcts_2D, quad_2D, diffusion_coef, Ke);
+			local_to_global_matrix(M, tri, Ke, K);
 
-		// F
-		int tri_attribute = M.get_triangle_attribute(tri);
-		if (attribute_is_dirichlet_and_source[tri_attribute]
-		    {
-			assemble_elementary_vector(elt_mapping_2D, shp_fcts_2D, quad_2D, source_term, Fe_2D);
-			local_to_global_vector(M, false, tri, Fe_2D, F);
-		    }
+			// F
+			int tri_attribute = M.get_triangle_attribute(tri);
+			if (attribute_is_dirichlet_and_source[tri_attribute])
+			    {
+				assemble_elementary_vector(elt_mapping_2D, shp_fcts_2D, quad_2D, source_term, Fe_2D);
+				local_to_global_vector(M, false, tri, Fe_2D, F);
+			    }
 		}
 
 		//Initialisation du vecteur de values pour Dirichlet
@@ -530,7 +530,7 @@ namespace FEM2A {
 		//Calcul des valeurs de Dirichlet
 		for (int i = 0; i < M.nb_vertices(); i++)
 		{
-		values[i] = dirichlet_fct(M.get_vertex(i));
+			values[i] = dirichlet_fct(M.get_vertex(i));
 		}
 
 		//Application des conditions de Dirichlet
@@ -539,24 +539,19 @@ namespace FEM2A {
 		//Application des conditions de Neumann
 		for (int edge_i = 0; edge_i < M.nb_edges(); ++edge_i) //On itere sur tous les bords du maillage
 		{
-		//On applique la conditon de Neumann 
-		if (attribute_is_neumann[M.get_edge_attribute(edge_i)])
-		{
-		    ElementMapping elt_mapping_1D(M, true, edge_i); // On travaille sur les borders avec Neumann
-		    assemble_elementary_neumann_vector(elt_mapping_1D, shp_fcts_1D, quad_1D, neumann_fct, Fe_1D);
-		    local_to_global_vector(M, true, edge_i, Fe_1D, F);
-		}
+			//On applique la conditon de Neumann 
+			if (attribute_is_neumann[M.get_edge_attribute(edge_i)])
+			{
+			    ElementMapping elt_mapping_1D(M, true, edge_i); // On travaille sur les borders avec Neumann
+			    assemble_elementary_neumann_vector(elt_mapping_1D, shp_fcts_1D, quad_1D, neumann_fct, Fe_1D);
+			    local_to_global_vector(M, true, edge_i, Fe_1D, F);
+			}
 		}
 
 		//Recherche de la solution
 		FEM2A::solve(K, F, solution);
 
-		//Creation du fichier de solution
-		std::string solution_name;
-		solution_name.assign(mesh_filename.begin() + 5, mesh_filename.end() - 4);
-		std::string sol_path = "solutions/neumann_" + solution_name;
-		M.save(sol_path + "mesh");
-		save_solution(solution, sol_path + "bb");
+		
     	}
     }
 }

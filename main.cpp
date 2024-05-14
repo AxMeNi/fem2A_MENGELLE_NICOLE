@@ -39,7 +39,8 @@ void run_tests()
     const bool t_cdtdirich = false;
     const bool t_assemble_elementary_vector = false;
     const bool t_local_to_global_vector = false;
-    const bool t_assemble_neumann = true;
+    const bool t_assemble_neumann = false;
+    const bool t_poisson = true;
 
     if( t_opennl ) test_opennl();
     if( t_lmesh ) Tests::test_load_mesh();
@@ -51,8 +52,9 @@ void run_tests()
     if( t_lcltgbl) Tests::test_local_to_global_matrix() ;
     if( t_cdtdirich) Tests::test_apply_dirichlet_boundary_conditions();
     if( t_assemble_elementary_vector) Tests::test_assemble_elementary_vector();
-    if (t_local_to_global_vector ) Tests::test_local_to_global_vector();
-    if (t_assemble_neumann ) Tests::test_assemble_elementary_neumann_vector();
+    if( t_local_to_global_vector ) Tests::test_local_to_global_vector();
+    if( t_assemble_neumann ) Tests::test_assemble_elementary_neumann_vector();
+    if( t_poisson) Tests::test_poisson_problem("data/square_fine.mesh");
 }
 
 void run_simu()

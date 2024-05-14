@@ -303,20 +303,81 @@ namespace FEM2A {
             	}
         	
         	return true;
-        
-        
-        bool test_poisson_problem()
-        {
-        	Mesh mesh;
-        	mesh.load("data/square.mesh");
-       		solve_poisson_problem(Mesh& M,
-            double (*diffusion_coef)(vertex),
-            double (*source_term)(vertex),
-            double (*dirichlet_fct)(vertex),
-            double (*neumann_fct)(vertex),
-            std::vector<double>& solution,
-            int verbose )
         }
+        
+        
+        ////////////////////////////////////////////////////////////////////////////
+        ////// ALL THE FUNCTIONS ABOVE ARE FOR SOLVING THE POISSON PROBLEM//////////
+        ////////////////////////////////////////////////////////////////////////////
+        
+        double region_top (vertex v)
+	{
+		if (v.y >= 0.999999999) {return 1.;}
+		else {return -1.;};
+	}
+	
+	double region_bottom (vertex v)
+	{
+		if (v.y <= 0.000000001) {return 1.;}
+		else {return -1.;};
+	}
+	
+	double region_right (vertex v)
+	{
+		if (std::abs(v.x-1.) <= 0.000000001) {return 1.;}
+		else {return -1.;};
+	}
+	
+	double region_left (vertex v)
+	{
+		if (std::abs(v.x) <= 0.000000001) {return 1.;}
+		else {return -1.;};
+	}
+	
+	double unit_fct( vertex v )
+	{
+    		return 1.;
+	}
+	
+	double zero_fct( vertex v )
+	{
+    		return 0.;
+	}
+	
+	double neumann_fct_square (vertex v)
+	{
+		if (region_left(v) == 1)	//Neumann non nul pour le bord gauche
+			{return sin(M_PI*v.y);} 
+		else {return 0;} 		//Neumann nul pour le bord droit
+	}
+        
+        bool test_poisson_problem( const std::string& mesh_filename)
+        {
+		Mesh M;
+		M.load(mesh_filename);
+		
+		//Definition des attributs
+		M.set_attribute(region_right, 1, true);  	//Cond de Dirichlet
+		M.set_attribute(region_left, 2, true); 		//Cond de Neumann - non nulle
+		M.set_attribute(region_top, 2, true); 		//Cond de Neumann - nulle
+		M.set_attribute(region_bottom, 2, true); 	//Cond de Neumann - nulle
+		
+		//Recherche de la solution
+        	std::vector<double> solution (M.nb_vertices(),0);
+        	
+		solve_poisson_problem(M, unit_fct, unit_fct, zero_fct, neumann_fct_square, solution, false);
+            
+		//Creation du fichier de solution
+		std::string solution_name;
+		solution_name.assign(mesh_filename.begin() + 5, mesh_filename.end() - 4);
+		std::string sol_path = "solutions/poisson_" + solution_name;
+		M.save(sol_path + "mesh");
+		save_solution(solution, sol_path + "bb");
+		std::cout << "Successfully saved the poisson file \n" ;
+		return true;
+        }
+        
+
     }
 }
 

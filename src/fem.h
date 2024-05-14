@@ -264,7 +264,6 @@ namespace FEM2A {
      * \brief Genereal function to solve a Poisson problem with the
      *        finite element method
      *
-     * \param[in] problem_name A name assigned to problem (for logging)
      * \param[in] M the mesh with its attributes already set
      * \param[in] diffusion_coef Function used to compute the diffusion coefficient,
      *                       applied to all triangles
