@@ -229,7 +229,8 @@ namespace FEM2A {
             return true;
         }
         
-        bool test_assemble_elementary_vector() {
+        bool test_assemble_elementary_vector() 
+        {
        	    Mesh mesh;
 	    mesh.load("data/square.mesh");
 	    ElementMapping elt_mapping(mesh, false, 4);
@@ -252,7 +253,8 @@ namespace FEM2A {
 	
         }
         
-        bool test_local_to_global_vector() {
+        bool test_local_to_global_vector() 
+        {
         	Mesh mesh;
 		mesh.load("data/square.mesh");
 		ElementMapping elt_mapping(mesh, false, 4);
@@ -278,7 +280,8 @@ namespace FEM2A {
         	return true;
         }
         
-        bool test_assemble_elementary_neumann_vector() {
+        bool test_assemble_elementary_neumann_vector() 
+        {
        		Mesh mesh;
         	mesh.load("data/square.mesh");
        		ElementMapping elt_mapping(mesh,true,4);
@@ -300,6 +303,19 @@ namespace FEM2A {
             	}
         	
         	return true;
+        
+        
+        bool test_poisson_problem()
+        {
+        	Mesh mesh;
+        	mesh.load("data/square.mesh");
+       		solve_poisson_problem(Mesh& M,
+            double (*diffusion_coef)(vertex),
+            double (*source_term)(vertex),
+            double (*dirichlet_fct)(vertex),
+            double (*neumann_fct)(vertex),
+            std::vector<double>& solution,
+            int verbose )
         }
     }
 }
