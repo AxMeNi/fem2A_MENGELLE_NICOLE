@@ -55,6 +55,7 @@ namespace FEM2A {
         
         bool test_quadrature(int order, bool border = false) 
         {
+		std::cout << "[TEST DE QUADRATURE] \n";
         	Quadrature quad;
         	quad = quad.get_quadrature(order, border); // Je crée une quadrature
         	std::cout << "Valeur de la somme des poids : ";
@@ -71,9 +72,11 @@ namespace FEM2A {
         
         
         bool test_ElementMapping() {
+		std::cout << "[TEST DE ELEMENT MAPPING] \n";
         	Mesh mesh;
         	mesh.load("data/square.mesh");
         	// Test constructeur
+		std::cout << ">> TEST DU COSNTRUCTEUR \n";
         	ElementMapping el_triangle( mesh, false, 4 );
         	ElementMapping el_border( mesh, true, 4 );
         	for (int i = 0; i < 3 ;++i) {
@@ -92,6 +95,7 @@ namespace FEM2A {
         	}
  
         	// Test transform
+		std::cout << ">> TEST DE TRANSFORM \n";
         	vertex vert1;
         	vert1.x = 0.2;
         	vert1.y = 0.4;
@@ -101,10 +105,12 @@ namespace FEM2A {
         	std::cout << "\n";
         	
         	// Test jacobian matrix
+		std::cout << ">> TEST DE JACOBIAN MATRIX \n";
         	DenseMatrix jacob_matrix = el_triangle.jacobian_matrix(vert1);
         	jacob_matrix.print();
         	
         	// Test det of jacobian matrix
+		std::cout << ">> TEST DE JACOBIAN \n";
         	double det1 = el_triangle.jacobian(vert1);
         	std::cout << "determinant with the triangle :" << det1 << "\n";
         	double det2 = el_border.jacobian(vert1);
@@ -114,6 +120,7 @@ namespace FEM2A {
         
         
         bool test_ShapeFunctions() {
+		std::cout << "[TEST DE SHAPE FUNCTIONS] \n";
         	vertex vert1;
         	vert1.x = 0.2;
         	vert1.y = 0.4;
@@ -146,26 +153,28 @@ namespace FEM2A {
 	
 	
         bool test_assemble_elementary_matrix() {
-	    Mesh mesh;
-	    mesh.load("data/square.mesh");
-	    ElementMapping elt_mapping(mesh, false, 4);
-	    
-	    ShapeFunctions reference_functions(2, 1);
-	    
-	    Quadrature quad;
-	    Quadrature quadrature = quad.get_quadrature(2, false);
-	    
-	    DenseMatrix Ke;
-	    
-	    // Assemblage de la matrice élémentaire en utilisant la fonction de pointeur constant_coefficient
-	    assemble_elementary_matrix(elt_mapping, reference_functions, quadrature, constant_coefficient, Ke);
-	    
-	    return true;
+		std::cout << "[TEST DE ASSEMBLE ELEMENTARY MATRIX] \n";
+		Mesh mesh;
+		mesh.load("data/square.mesh");
+		ElementMapping elt_mapping(mesh, false, 4);
+		
+		ShapeFunctions reference_functions(2, 1);
+		
+		Quadrature quad;
+		Quadrature quadrature = quad.get_quadrature(2, false);
+		
+		DenseMatrix Ke;
+		
+		// Assemblage de la matrice élémentaire en utilisant la fonction de pointeur constant_coefficient
+		assemble_elementary_matrix(elt_mapping, reference_functions, quadrature, constant_coefficient, Ke);
+		Ke.print()
+		return true;
 	
         }
         
         
         bool test_local_to_global_matrix() {
+		std::cout << "[TEST DE LOCAL TO GLOBAL MATRIX] \n";
 		Mesh mesh;
 		mesh.load("data/square.mesh");
 		ElementMapping elt_mapping(mesh, false, 4);
@@ -181,80 +190,83 @@ namespace FEM2A {
 	   	
 	   	SparseMatrix K (mesh.nb_vertices());
         	local_to_global_matrix(mesh, 4, Ke, K);
-        	
+        	K.print()
         	return true;
         }
         
         
         bool test_apply_dirichlet_boundary_conditions()
         {
-            Mesh mesh;
-            mesh.load("data/square.mesh");
-            
-            mesh.set_attribute( constant_coefficient, 0, true );
-            
-            ShapeFunctions reference_functions(2,1);
-            Quadrature quadrat = Quadrature::get_quadrature(0,false);
-            DenseMatrix Ke ;
-            SparseMatrix K(mesh.nb_vertices() * quadrat.nb_points());
-            
-            
-            for (int i=0 ; i<mesh.nb_triangles(); ++i)
-            {
-                ElementMapping element(mesh, false, i);
-                assemble_elementary_matrix(element, reference_functions, quadrat, constant_coefficient, Ke);
-                local_to_global_matrix(mesh, i, Ke, K);
-            }
-            
-            std::vector< double > F(mesh.nb_vertices(), 1);
-            
-            std::vector< bool > attribute_bool(1, true);
-            std::vector< double > values(mesh.nb_vertices());
-            
-            for (int i =0 ; i<mesh.nb_vertices(); ++i)
-            {
-                values[i] = mesh.get_vertex(i).x + mesh.get_vertex(i).y; 
-            }
-            
-            apply_dirichlet_boundary_conditions(mesh, attribute_bool, values, K, F);
-            
-            std::vector< double > x(mesh.nb_vertices(), 0);
-            solve(K,F, x);
-            
-            for (double xi :x)
-            {
-                std::cout << xi << '\t';
-            }
-            
-            return true;
+		std::cout << "[TEST DE APPLY DIRICHLET BOUNDARY CONDITIONS] \n";
+		Mesh mesh;
+		mesh.load("data/square.mesh");
+		
+		mesh.set_attribute( constant_coefficient, 0, true );
+		
+		ShapeFunctions reference_functions(2,1);
+		Quadrature quadrat = Quadrature::get_quadrature(0,false);
+		DenseMatrix Ke ;
+		SparseMatrix K(mesh.nb_vertices() * quadrat.nb_points());
+		
+		
+		for (int i=0 ; i<mesh.nb_triangles(); ++i)
+		{
+		ElementMapping element(mesh, false, i);
+		assemble_elementary_matrix(element, reference_functions, quadrat, constant_coefficient, Ke);
+		local_to_global_matrix(mesh, i, Ke, K);
+		}
+		
+		std::vector< double > F(mesh.nb_vertices(), 1);
+		
+		std::vector< bool > attribute_bool(1, true);
+		std::vector< double > values(mesh.nb_vertices());
+		
+		for (int i =0 ; i<mesh.nb_vertices(); ++i)
+		{
+		values[i] = mesh.get_vertex(i).x + mesh.get_vertex(i).y; 
+		}
+		
+		apply_dirichlet_boundary_conditions(mesh, attribute_bool, values, K, F);
+		
+		std::vector< double > x(mesh.nb_vertices(), 0);
+		solve(K,F, x);
+		
+		for (double xi :x)
+		{
+		std::cout << xi << '\t';
+		}
+		
+		return true;
         }
         
         bool test_assemble_elementary_vector() 
         {
-       	    Mesh mesh;
-	    mesh.load("data/square.mesh");
-	    ElementMapping elt_mapping(mesh, false, 4);
-	    
-	    ShapeFunctions reference_functions(2, 1);
-	    
-	    Quadrature quad;
-	    Quadrature quadrature = quad.get_quadrature(2, false);
-	    
-	    std::vector <double> Fe (3,0);
-	    
-	    // Assemblage de la matrice élémentaire en utilisant la fonction de pointeur constant_coefficient
-	    assemble_elementary_vector(elt_mapping, reference_functions, quadrature, constant_coefficient, Fe ) ;
-	    for (int i = 0 ; i < 3 ; i++){
-	    	
-	    	std::cout << Fe[i] << "\n";
-	    }
-	    
-	    return true;
+		std::cout << "[TEST DE ASSEMBLE ELEMENTARY MATRIX] \n";
+		Mesh mesh;
+		mesh.load("data/square.mesh");
+		ElementMapping elt_mapping(mesh, false, 4);
+		
+		ShapeFunctions reference_functions(2, 1);
+		
+		Quadrature quad;
+		Quadrature quadrature = quad.get_quadrature(2, false);
+		
+		std::vector <double> Fe (3,0);
+		
+		// Assemblage de la matrice élémentaire en utilisant la fonction de pointeur constant_coefficient
+		assemble_elementary_vector(elt_mapping, reference_functions, quadrature, constant_coefficient, Fe ) ;
+		for (int i = 0 ; i < 3 ; i++){
+		
+		std::cout << Fe[i] << "\n";
+		}
+		
+		return true;
 	
         }
         
         bool test_local_to_global_vector() 
         {
+		std::cout << "[TEST DE LOCAL TO GLOBAL VECTOR] \n";
         	Mesh mesh;
 		mesh.load("data/square.mesh");
 		ElementMapping elt_mapping(mesh, false, 4);
@@ -282,6 +294,7 @@ namespace FEM2A {
         
         bool test_assemble_elementary_neumann_vector() 
         {
+		std::cout << "[TEST DE ASSEMBLE ELEMENTARY NEUMANN VECTOR] \n";
        		Mesh mesh;
         	mesh.load("data/square.mesh");
        		ElementMapping elt_mapping(mesh,true,4);
@@ -353,6 +366,7 @@ namespace FEM2A {
         
         bool test_poisson_problem( const std::string& mesh_filename)
         {
+		std::cout << "[TEST DE POISSON PROBELM] \n";
 		Mesh M;
 		M.load(mesh_filename);
 		
@@ -373,7 +387,7 @@ namespace FEM2A {
 		std::string sol_path = "solutions/poisson_" + solution_name;
 		M.save(sol_path + "mesh");
 		save_solution(solution, sol_path + "bb");
-		std::cout << "Successfully saved the poisson file \n" ;
+		std::cout << "Successfully saved the poisson file in data/output/ \n" ;
 		return true;
         }
         
