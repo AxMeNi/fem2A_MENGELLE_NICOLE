@@ -3,9 +3,9 @@ Utilisation de programmes de simulations de processus : fem2A_MENGELLE_NICOLE
 
 ### Initialisation
 Pour lancer les programmes, il faut : 
-1) Tout d'abord clone le repo en local
+1) Tout d'abord cloner le repo en local
 2) Se placer dans le repo
-3) Compiler le code avec make
+3) Compiler le code avec lac commande make
 4) Executer le code avec ./build/fem2a suivi d'une commande qui peut être -t (pour les tests), -s (pour les simulations), -h (pour obtenir de l'aide), -v (pour print les versions verbosées avec beaucoup de détails, mais celle-ci n'a pas eu le temps d'être mise en place)
 
 ### Tests
@@ -25,5 +25,5 @@ Afin de réaliser une simulation il faut :
 Le fichier solution.bb et le fichier solution.mesh associé au problème sont stockés dans data/output. Le nom des solutions sont modifiables dans le fichier simu.h
 
 ### Affichage simulations
-Pour afficher les solutions, éxecuter (via le projet Medit) la commande : path_to_medit data/output/nom_de_la_solution.mesh
+Pour afficher les solutions, éxecuter (via le projet Medit) la commande : path_to_medit data/output/nom_de_la_solution.mesh. Appuyer sur la touche m du clavier pour visualiser la solution.
 
