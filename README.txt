@@ -14,8 +14,6 @@ Pour tester une fonction il faut
 1) Choisir quelle fonction doit être testée en définissant les booléens de la fonction run_tests dans le main.cpp sur true
 2) Exécuter les tests avec le ./build/fem2a -t
 
-/!\Attention, certains tests nécessitent de décommenter des lignes présents dans des fonctions du fichier fem.cpp afin de permettre les affichages. C'est le cas de la fonction local_to_global_matrix et de assemble_elementary matrix.
-
 /!\Attention, pour le test de la fonction apply dirichlet_boundary_condition, il serait bien de définir un chemin de sortie pour le fichier de solution afin d'afficher autre chose que les valeurs x qui sont illisibles. Cela a été fait au cours des simulations, raison pour laquelle ce test n'a pas produit de fichier mesh et n'a pas de solution visualisable.
 
 ### Simulations
