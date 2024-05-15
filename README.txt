@@ -20,7 +20,7 @@ Pour tester une fonction il faut
 
 ### Simulations
 Afin de réaliser une simulation il faut :
-1) Choisir quelle simulation effectuée dans le main.cpp en passant le booléen qui lui est associé dans run_simu sur true.
+1) Choisir quelle simulation effectuer dans le main.cpp en passant le booléen qui lui est associé dans run_simu sur true.
 2) Choisir le maillage sur lequel sera effectué la simulation dans le main.cpp à l'intérieur du if associé au test (les maillages 
 3) Exécuter avec ./build/fem2a -m
 
