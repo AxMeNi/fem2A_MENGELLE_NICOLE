@@ -198,6 +198,7 @@ namespace FEM2A {
         bool test_apply_dirichlet_boundary_conditions()
         {
 		std::cout << "[TEST DE APPLY DIRICHLET BOUNDARY CONDITIONS] \n";
+		std::cout << "Remarque : ce test affiche x, le vecteur des valeurs finales après l'application de la conditon de Dirichlet. Pour effectuer un simulation et produire un fichier de simulation, passer par la commande -m.\n";
 		Mesh mesh;
 		mesh.load("data/square.mesh");
 		
