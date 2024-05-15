@@ -517,6 +517,7 @@ namespace FEM2A {
 
 			// F
 			int tri_attribute = M.get_triangle_attribute(tri);
+			//On appplique le terme source uniquement pour les triangles dont l'attribut est 1
 			if (attribute_is_dirichlet_and_source[tri_attribute])
 			    {
 				assemble_elementary_vector(elt_mapping_2D, shp_fcts_2D, quad_2D, source_term, Fe_2D);
@@ -553,6 +554,12 @@ namespace FEM2A {
 
 		
     	}
+    }
+    
+    
+    
+ 
+    	
     }
 }
 

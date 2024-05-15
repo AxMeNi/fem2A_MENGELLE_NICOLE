@@ -285,6 +285,15 @@ namespace FEM2A {
             double (*neumann_fct)(vertex),
             std::vector<double>& solution,
             bool verbose ) ;
+     
+    //void solve_poisson_problem2(
+            //const Mesh& M,
+            //double (*diffusion_coef)(vertex),
+            //double (*source_term)(vertex),
+            //double (*dirichlet_fct)(vertex),
+            //double (*neumann_fct)(vertex),
+            //std::vector<double>& solution,
+            //bool verbose ) ;
 
 }
 

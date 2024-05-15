@@ -583,6 +583,49 @@ namespace FEM2A {
         	
 
         }
+        
+        
+        
+        
+        //bool diff_poisson_orders( const std::string& mesh_filename, bool verbose)
+        //{
+        	// if ( verbose ) 
+            	// {
+                	// std::cout << " with lots of printed details..." << std::endl;
+            	// }
+		//Mesh M;
+		//M.load(mesh_filename);
+		
+		//Definition des attributs
+		//M.set_attribute(region_right, 1, true);  	//Cond de Dirichlet
+		//M.set_attribute(region_left, 2, true); 		//Cond de Neumann - non nulle
+		//M.set_attribute(region_top, 2, true); 		//Cond de Neumann - nulle
+		//M.set_attribute(region_bottom, 2, true); 	//Cond de Neumann - nulle
+		
+		//Recherche des solutions pour le problème de poisson avec deux ordres différents pour les quadrature (6 et 2)
+        	// std::vector<double> solution (M.nb_vertices(),0); 	//Quadrature d'ordre 6
+        	// std::vector<double> solution2 (M.nb_vertices(),0);	//Quadrature d'ordre 2
+        	// std::vector<double> x_diff (M.nb_vertices(),0);
+        	
+        	
+		// solve_poisson_problem(M, unit_fct, unit_fct, zero_fct, neumann_fct_square, solution, false);
+		// solve_poisson_problem2(M, unit_fct, unit_fct, zero_fct, neumann_fct_square, solution2, false);
+		
+		// for (int i = 0 ; i < M.nb_vertices(); i++)
+        	// {
+        		// x_diff[i] = std::abs(solution[i] - solution2[i]);
+        	// }
+            
+		//Creation du fichier de solution
+		// std::string solution_name;
+		// solution_name.assign(mesh_filename.begin() + 5, mesh_filename.end() - 4);
+		// std::string sol_path = "solutions/diff_poisson_orders_" + solution_name;
+		// M.save(sol_path + "mesh");
+		// save_solution(x_diff, sol_path + "bb");
+		// std::cout << "Successfully saved the poisson file \n" ;
+		// return true;
+        // }
+
     }
 
 }

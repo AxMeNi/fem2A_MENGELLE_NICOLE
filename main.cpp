@@ -66,7 +66,8 @@ void run_simu()
     const bool simu_analytic_sinus_bumb = false;
     const bool simu_diff_sin = false;
     const bool simu_neumann_pb = false;
-    const bool simu_mug_pb = true;
+    const bool simu_mug_pb = false;
+    //const bool simu_diff_poisson_orders = true;
 
     const bool verbose = flag_is_used( "-v", arguments )
         || flag_is_used( "--verbose", arguments );
@@ -106,6 +107,10 @@ void run_simu()
     	Simu::mug_pb("data/mug_0_5.mesh", verbose);
     }
     
+    //if (simu_diff_poisson_orders )
+    //{
+    //	Simu::diff_poisson_orders("data/square_fine.mesh", verbose);
+    //}
 }
 
 int main( int argc, const char * argv[] )
