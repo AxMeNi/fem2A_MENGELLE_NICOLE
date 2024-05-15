@@ -286,6 +286,9 @@ namespace FEM2A {
             std::vector<double>& solution,
             bool verbose ) ;
      
+     
+    // The function above was used to create the "difference" solution between two simulations of poisson problem with different quadrature orders
+    
     //void solve_poisson_problem2(
             //const Mesh& M,
             //double (*diffusion_coef)(vertex),

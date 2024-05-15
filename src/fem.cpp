@@ -480,7 +480,7 @@ namespace FEM2A {
         
         if (verbose == false)
         {
-		const int quad_order_2D = 6;
+		const int quad_order_2D = 2;
 		const int quad_order_1D = 2;
 
 		//Initialisation des shape functions
@@ -516,8 +516,8 @@ namespace FEM2A {
 			local_to_global_matrix(M, tri, Ke, K);
 
 			// F
-			int tri_attribute = M.get_triangle_attribute(tri);
 			//On appplique le terme source uniquement pour les triangles dont l'attribut est 1
+			int tri_attribute = M.get_triangle_attribute(tri);
 			if (attribute_is_dirichlet_and_source[tri_attribute])
 			    {
 				assemble_elementary_vector(elt_mapping_2D, shp_fcts_2D, quad_2D, source_term, Fe_2D);
@@ -556,11 +556,97 @@ namespace FEM2A {
     	}
     }
     
+    // The function above was used to create the "difference" solution between two simulations of poisson problem with different quadrature orders
     
-    
- 
+    //void solve_poisson_problem2(
+    //        const Mesh& M,
+    //        double (*diffusion_coef)(vertex),
+    //        double (*source_term)(vertex),
+    //        double (*dirichlet_fct)(vertex),
+    //        double (*neumann_fct)(vertex),
+    //        std::vector<double>& solution,
+    //        bool verbose )
+    //{
+        // std::cout << "solve poisson problem" << '\n';
+        
+        // if (verbose == false)
+        // {
+		// const int quad_order_2D = 2;
+		// const int quad_order_1D = 2;
+
+		// //Initialisation des shape functions
+		// ShapeFunctions shp_fcts_2D(2, 1); // Pour les triangles
+		// ShapeFunctions shp_fcts_1D(1, 1); // Pour les edges
+
+		// //Initialisation de la quadrature
+		// Quadrature quad_2D = Quadrature::get_quadrature(quad_order_2D, false);
+		// Quadrature quad_1D = Quadrature::get_quadrature(quad_order_1D, true);
+
+		// //Initiatlisation de F et de K
+		// SparseMatrix K(M.nb_vertices());
+		// DenseMatrix Ke;
+
+		// std::vector< double > F(M.nb_vertices(), 0.);
+		// std::vector <double> Fe_2D(3, 0.);
+		// std::vector <double> Fe_1D(2, 0.);
+
+		// //Creation des booleens qui indiquent quelle action sera a effectuer
+		// std::vector< bool > attribute_is_dirichlet_and_source(3, false);
+		// attribute_is_dirichlet_and_source[1] = true;
+
+		// std::vector< bool > attribute_is_neumann(3, false);
+		// attribute_is_neumann[2] = true;
+
+		// // On applique le coefficient de diffusion et le terme source
+		// for (int tri = 0; tri < M.nb_triangles(); tri++)
+		// {
+			// ElementMapping elt_mapping_2D(M, false, tri);
+
+			// // K
+			// assemble_elementary_matrix(elt_mapping_2D, shp_fcts_2D, quad_2D, diffusion_coef, Ke);
+			// local_to_global_matrix(M, tri, Ke, K);
+
+			// // F
+			// int tri_attribute = M.get_triangle_attribute(tri);
+			// if (attribute_is_dirichlet_and_source[tri_attribute])
+			//     {
+			// 	assemble_elementary_vector(elt_mapping_2D, shp_fcts_2D, quad_2D, source_term, Fe_2D);
+			// 	local_to_global_vector(M, false, tri, Fe_2D, F);
+			//     }
+		// }
+
+		// //Initialisation du vecteur de values pour Dirichlet
+		// std::vector< double > values(M.nb_vertices(), 0);
+
+		// //Calcul des valeurs de Dirichlet
+		// for (int i = 0; i < M.nb_vertices(); i++)
+		// {
+			// values[i] = dirichlet_fct(M.get_vertex(i));
+		// }
+
+		// //Application des conditions de Dirichlet
+		// apply_dirichlet_boundary_conditions(M, attribute_is_dirichlet_and_source, values, K, F);
+
+		// //Application des conditions de Neumann
+		// for (int edge_i = 0; edge_i < M.nb_edges(); ++edge_i) //On itere sur tous les bords du maillage
+		// {
+			// //On applique la conditon de Neumann 
+			// if (attribute_is_neumann[M.get_edge_attribute(edge_i)])
+			// {
+			//     ElementMapping elt_mapping_1D(M, true, edge_i); // On travaille sur les borders avec Neumann
+			//     assemble_elementary_neumann_vector(elt_mapping_1D, shp_fcts_1D, quad_1D, neumann_fct, Fe_1D);
+			//     local_to_global_vector(M, true, edge_i, Fe_1D, F);
+			// }
+		// }
+
+		// //Recherche de la solution
+		// FEM2A::solve(K, F, solution);
+
+		
+    	// }
     	
-    }
+    //}
+
 }
 
 

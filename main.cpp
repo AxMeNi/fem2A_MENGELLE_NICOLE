@@ -107,6 +107,8 @@ void run_simu()
     	Simu::mug_pb("data/mug_0_5.mesh", verbose);
     }
     
+    // The simulation above can be run if all the functions in fem.h fem.cpp and simu.h that are required to execute it are de-commented
+        
     //if (simu_diff_poisson_orders )
     //{
     //	Simu::diff_poisson_orders("data/square_fine.mesh", verbose);

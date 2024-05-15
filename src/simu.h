@@ -329,7 +329,7 @@ namespace FEM2A {
         
         void diff_pb_sin ( const std::string& mesh_filename, bool verbose )
         {
-        	std::cout << "Solving a Dirichlet problem with sinus source term" << std::endl;
+        	std::cout << "Creating a differential solution file of sinus bump and analytic sinus bump" << std::endl;
             	if ( verbose ) 
             	{
                 	std::cout << " with lots of printed details..." << std::endl;
@@ -413,7 +413,7 @@ namespace FEM2A {
         
         void neumann_pb( const std::string& mesh_filename, bool verbose )
 	{
-            	std::cout << "Solving a Dirichlet problem with source term" << std::endl;
+            	std::cout << "Solving a Neumann problem" << std::endl;
             	if ( verbose ) 
             	{
                 	std::cout << " with lots of printed details..." << std::endl;
@@ -502,7 +502,7 @@ namespace FEM2A {
         
         void mug_pb( const std::string& mesh_filename, bool verbose )
 	{
-            	std::cout << "Solving a Dirichlet problem with source term" << std::endl;
+            	std::cout << "Solving a mugp problem" << std::endl;
             	if ( verbose ) 
             	{
                 	std::cout << " with lots of printed details..." << std::endl;
@@ -585,6 +585,7 @@ namespace FEM2A {
         }
         
         
+        // The function above was used to create the "difference" solution between two simulations of poisson problem with different quadrature orders
         
         
         //bool diff_poisson_orders( const std::string& mesh_filename, bool verbose)
@@ -625,6 +626,7 @@ namespace FEM2A {
 		// std::cout << "Successfully saved the poisson file \n" ;
 		// return true;
         // }
+        
 
     }
 
